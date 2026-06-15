@@ -1,0 +1,28 @@
+{
+  "metadata_api": {
+    "metadata": {
+      "copyright": "© Google",
+      "date": "2013-10",
+      "location": {
+        "lat": 41.1763086091135,
+        "lng": 1.50843100474745
+      },
+      "pano_id": "p_T1GGVEYwM0SAGouT8ISQ",
+      "status": "OK"
+    },
+    "query_location": {
+      "lat": 41.175996622349984,
+      "lon": 1.508548001401587
+    }
+  },
+  "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",
+  "provider": "google-street-view",
+  "static_api_request": {
+    "fov": 90.0,
+    "heading": 0.0,
+    "pano": "p_T1GGVEYwM0SAGouT8ISQ",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  }
+}

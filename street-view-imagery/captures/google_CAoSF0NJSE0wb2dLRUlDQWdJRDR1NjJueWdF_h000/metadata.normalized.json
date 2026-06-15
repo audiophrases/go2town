@@ -1,0 +1,20 @@
+{
+  "attribution": "© David Flores",
+  "captured_at": "2018-05",
+  "fov": 90.0,
+  "heading": 0.0,
+  "height": 640,
+  "id": "google:CAoSF0NJSE0wb2dLRUlDQWdJRDR1NjJueWdF:h000",
+  "is_pano": true,
+  "lat": 41.1833112734139,
+  "license": "Google Maps Platform Terms of Service / Street View Static API terms",
+  "lon": 1.535993994237445,
+  "metadata_source_url": "https://maps.googleapis.com/maps/api/streetview/metadata",
+  "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJRDR1NjJueWdF",
+  "pitch": 0.0,
+  "provider": "google-street-view",
+  "raw_metadata_path": "captures/google_CAoSF0NJSE0wb2dLRUlDQWdJRDR1NjJueWdF_h000/metadata.raw.json",
+  "sequence_id": null,
+  "source_url": "https://maps.googleapis.com/maps/api/streetview",
+  "width": 640
+}

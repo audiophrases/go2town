@@ -38,6 +38,24 @@ function ensurePannellum() {
   });
 }
 
+// Build the six Pannellum cubemap faces from a Google Street View pano's four
+// 90°-FOV side captures. Pannellum order is [front, right, back, left, up, down];
+// Street View heading 0/90/180/270 = north/east/south/west = front/right/back/left.
+// Top & bottom weren't captured, so "null" lets Pannellum show the background.
+// (If left/right ever look mirrored, swap indices 1 and 3 here.)
+const CUBE_HEADINGS = ["h000", "h090", "h180", "h270"];
+function cubeFaces(panoId) {
+  const base = `imagery/captures/google_${panoId}`;
+  return [
+    `${base}_${CUBE_HEADINGS[0]}/image.jpg`, // front  (N)
+    `${base}_${CUBE_HEADINGS[1]}/image.jpg`, // right  (E)
+    `${base}_${CUBE_HEADINGS[2]}/image.jpg`, // back   (S)
+    `${base}_${CUBE_HEADINGS[3]}/image.jpg`, // left   (W)
+    "null", // up    — not captured
+    "null", // down  — not captured
+  ];
+}
+
 // Paint a clearly-a-placeholder equirectangular panorama (beach bands + label).
 function makePlaceholderPano(scene, idx, total) {
   const c = document.createElement("canvas");
@@ -122,8 +140,12 @@ export class Pano360World extends WorldBase {
     ids.forEach((id, idx) => {
       const sc = this.scenes[id];
       const fwd = forwardLinkOf(id);
-      const northOffset =
-        sc.northOffset ?? (fwd ? bearing(sc, this.scenes[fwd]) : 0);
+      // Cubemap scenes (Google Street View faces) are north-aligned: the front
+      // face looks at compass heading 0, so yaw 0 == north (northOffset 0).
+      // Placeholder/equirect scenes default to facing the next waypoint.
+      const northOffset = sc.cube
+        ? sc.northOffset ?? 0
+        : sc.northOffset ?? (fwd ? bearing(sc, this.scenes[fwd]) : 0);
       this._northOffsets[id] = northOffset;
 
       const hotSpots = (sc.links || []).map((linkId) => {
@@ -138,17 +160,22 @@ export class Pano360World extends WorldBase {
         };
       });
 
-      builtScenes[id] = {
-        type: "equirectangular",
-        panorama: sc.image
-          ? `img/scenes/${sc.image}`
-          : makePlaceholderPano(sc, idx, ids.length),
-        northOffset,
-        hfov: 110,
-        yaw: 0,
-        pitch: 0,
-        hotSpots,
-      };
+      const common = { northOffset, hfov: 110, yaw: 0, pitch: 0, hotSpots };
+      if (sc.cube) {
+        builtScenes[id] = { type: "cubemap", cubeMap: cubeFaces(id), ...common };
+      } else if (sc.image) {
+        builtScenes[id] = {
+          type: "equirectangular",
+          panorama: `img/scenes/${sc.image}`,
+          ...common,
+        };
+      } else {
+        builtScenes[id] = {
+          type: "equirectangular",
+          panorama: makePlaceholderPano(sc, idx, ids.length),
+          ...common,
+        };
+      }
     });
 
     this.viewer = pannellum.viewer(this.container, {

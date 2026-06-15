@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Build the go2town 360 scene graph from the Google Street View fixtures.
+
+Each unique pano becomes a scene. We reconstruct a walkable graph by linking
+panos that are close together (Street View points sit a few metres apart along
+a road). The four 90° views (h000/090/180/270) are served as cubemap faces by
+the front-end.
+
+Usage:
+    python scripts/build_scenes.py            # analyse + print a report
+    python scripts/build_scenes.py --write    # also write the generated JS
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import math
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+IMG_DIR = ROOT / "street-view-imagery"
+MANIFEST = IMG_DIR / "manifest.json"
+OUT_JS = ROOT / "public" / "js" / "data" / "comaruga.scenes.generated.js"
+
+# Mission anchor points (the seafront we start at, the station we walk to).
+SEAFRONT = (41.18745, 1.52405)
+STATION = (41.17365, 1.50995)
+
+# Graph tuning. These panos are sparse (~240 m apart), so the radius links each
+# stop to its ring of neighbours; the fallback guarantees no dead ends.
+LINK_RADIUS_M = 320.0  # link panos at most this far apart
+MAX_LINKS = 5          # cap hotspots per scene
+NEAREST_FALLBACK = 3   # always link at least this many nearest, even if > radius
+
+
+def haversine(a, b):
+    R = 6371000.0
+    lat1, lon1, lat2, lon2 = map(math.radians, [a[0], a[1], b[0], b[1]])
+    dlat, dlon = lat2 - lat1, lon2 - lon1
+    h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(h))
+
+
+def load_nodes():
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    nodes = {}
+    for cap in data["captures"]:
+        pano = cap["id"].split(":")[1]
+        if pano not in nodes:
+            nodes[pano] = {"id": pano, "lat": cap["lat"], "lon": cap["lon"]}
+    return nodes
+
+
+def build_links(nodes):
+    ids = list(nodes)
+    links = {i: [] for i in ids}
+    for i in ids:
+        a = (nodes[i]["lat"], nodes[i]["lon"])
+        dists = []
+        for j in ids:
+            if i == j:
+                continue
+            d = haversine(a, (nodes[j]["lat"], nodes[j]["lon"]))
+            dists.append((d, j))
+        dists.sort()
+        chosen = [j for d, j in dists if d <= LINK_RADIUS_M][:MAX_LINKS]
+        for d, j in dists[:NEAREST_FALLBACK]:
+            if j not in chosen:
+                chosen.append(j)
+        links[i] = chosen
+    # Make links symmetric.
+    for i in ids:
+        for j in links[i]:
+            if i not in links[j]:
+                links[j].append(i)
+    return links
+
+
+def nearest_node(nodes, target):
+    return min(nodes, key=lambda i: haversine((nodes[i]["lat"], nodes[i]["lon"]), target))
+
+
+def connected(nodes, links, start, goal):
+    seen, stack = {start}, [start]
+    while stack:
+        cur = stack.pop()
+        if cur == goal:
+            return True
+        for nxt in links[cur]:
+            if nxt not in seen:
+                seen.add(nxt)
+                stack.append(nxt)
+    return goal in seen
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--write", action="store_true")
+    args = ap.parse_args()
+
+    nodes = load_nodes()
+    links = build_links(nodes)
+
+    lats = [n["lat"] for n in nodes.values()]
+    lons = [n["lon"] for n in nodes.values()]
+    print(f"nodes: {len(nodes)}")
+    print(f"bbox lat {min(lats):.5f}..{max(lats):.5f}  lon {min(lons):.5f}..{max(lons):.5f}")
+
+    degs = [len(v) for v in links.values()]
+    print(f"links/node: min {min(degs)} max {max(degs)} avg {sum(degs)/len(degs):.1f}")
+
+    start = nearest_node(nodes, SEAFRONT)
+    station = nearest_node(nodes, STATION)
+    ds = haversine((nodes[start]["lat"], nodes[start]["lon"]), SEAFRONT)
+    dg = haversine((nodes[station]["lat"], nodes[station]["lon"]), STATION)
+    route = haversine((nodes[start]["lat"], nodes[start]["lon"]),
+                      (nodes[station]["lat"], nodes[station]["lon"]))
+    print(f"start  node {start}  ({ds:.0f} m from seafront anchor)")
+    print(f"station node {station}  ({dg:.0f} m from station anchor)")
+    print(f"start->station straight line: {route:.0f} m")
+    print(f"connected start->station? {connected(nodes, links, start, station)}")
+
+    # isolated nodes (degree 0 should not happen given fallback)
+    iso = [i for i, v in links.items() if not v]
+    print(f"isolated nodes: {len(iso)}")
+
+    if args.write:
+        scenes = {}
+        for i, n in nodes.items():
+            scenes[i] = {
+                "lat": round(n["lat"], 7),
+                "lon": round(n["lon"], 7),
+                "links": links[i],
+            }
+        payload = {
+            "startScene": start,
+            "stationScene": station,
+            "stationLat": round(nodes[station]["lat"], 7),
+            "stationLng": round(nodes[station]["lon"], 7),
+            "scenes": scenes,
+        }
+        OUT_JS.write_text(
+            "// AUTO-GENERATED by scripts/build_scenes.py — do not edit by hand.\n"
+            "// 360 scene graph reconstructed from the Google Street View fixtures.\n"
+            "export const GENERATED = " + json.dumps(payload, indent=1) + ";\n",
+            encoding="utf-8",
+        )
+        print(f"wrote {OUT_JS.relative_to(ROOT)}  ({len(scenes)} scenes)")
+
+
+if __name__ == "__main__":
+    main()

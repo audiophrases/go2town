@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T13:13:32Z",
+  "query": {
+    "location": "41.1759966,1.5052062",
+    "radius": 50,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Google",
+    "date": "2025-04",
+    "location": {
+      "lat": 41.17597608230005,
+      "lng": 1.505250079348108
+    },
+    "pano_id": "4f3B8npXOHP5gSOefy9C9A",
+    "status": "OK"
+  }
+}

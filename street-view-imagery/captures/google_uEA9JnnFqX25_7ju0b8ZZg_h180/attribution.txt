@@ -1,0 +1,5 @@
+Provider: Google Street View Static API
+Pano ID: uEA9JnnFqX25_7ju0b8ZZg
+Attribution: © Google
+License/terms: Google Maps Platform Terms of Service / Street View Static API terms
+Source: https://maps.googleapis.com/maps/api/streetview

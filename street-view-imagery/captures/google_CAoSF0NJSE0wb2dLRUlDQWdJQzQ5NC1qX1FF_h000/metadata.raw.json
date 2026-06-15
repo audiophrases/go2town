@@ -1,0 +1,28 @@
+{
+  "metadata_api": {
+    "metadata": {
+      "copyright": "© Xavi Casas",
+      "date": "2016-05",
+      "location": {
+        "lat": 41.17672954318998,
+        "lng": 1.50172752655911
+      },
+      "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJQzQ5NC1qX1FF",
+      "status": "OK"
+    },
+    "query_location": {
+      "lat": 41.17671527128998,
+      "lon": 1.5018644004204762
+    }
+  },
+  "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",
+  "provider": "google-street-view",
+  "static_api_request": {
+    "fov": 90.0,
+    "heading": 0.0,
+    "pano": "CAoSF0NJSE0wb2dLRUlDQWdJQzQ5NC1qX1FF",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  }
+}

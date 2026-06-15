@@ -74,64 +74,102 @@ async function main() {
       awaitPromise: true,
     }).then((r) => r?.result?.value);
 
+  await evalJs(`(()=>{
+    window.__errs=[];
+    addEventListener('error', e => window.__errs.push('err: '+(e.message||e.error)));
+    addEventListener('unhandledrejection', e => window.__errs.push('rej: '+((e.reason&&e.reason.stack)||e.reason)));
+    return true;
+  })()`);
+
   const preStart = await evalJs(`JSON.stringify({
     startBtn: !!document.getElementById('start-btn'),
     gameModuleTag: document.querySelectorAll('script[type=module]').length,
+    devPanelHidden: document.getElementById('dev-panel').classList.contains('hidden'),
+    readyState: document.readyState,
   })`);
   console.log("preStart  :", preStart);
 
+  // Poll an expression until it returns truthy (or timeout). Returns the value.
+  const pollUntil = async (expr, timeoutMs, stepMs = 400) => {
+    const t0 = Date.now();
+    let v;
+    do {
+      v = await evalJs(expr);
+      if (v) return v;
+      await sleep(stepMs);
+    } while (Date.now() - t0 < timeoutMs);
+    return v;
+  };
+
   // 1) press start (trusted gesture so audio unlock + init run)
   await evalJs(`document.getElementById('start-btn').click(); true`, true);
-  await sleep(2000);
-  const mid = await evalJs(`JSON.stringify({
-    startGateHidden: document.getElementById('start-gate').classList.contains('hidden'),
-    pannellumScript: document.querySelectorAll('script[src*=pannellum]').length,
-    windowPannellum: !!window.pannellum,
-    worldHTML: document.getElementById('world').className + '|' + document.getElementById('world').innerHTML.slice(0,80),
-  })`);
-  console.log("mid       :", mid);
-  await sleep(3500); // pannellum builds scenes / placeholder panos
 
+  // 2) wait for the 360 world + walking hotspots to render
+  await pollUntil(`document.querySelectorAll('.go2-hs').length`, 15000);
   const afterStart = await evalJs(`JSON.stringify({
+    startGateHidden: document.getElementById('start-gate').classList.contains('hidden'),
     pannellum: !!window.pannellum,
     worldCanvas: !!document.querySelector('#world canvas'),
-    pnlmContainer: !!document.querySelector('#world .pnlm-container'),
-    hotspots: document.querySelectorAll('.pnlm-hotspot.go2-hs').length,
-    nameModalOpen: !document.getElementById('name-modal').classList.contains('hidden'),
+    worldIsPnlm: document.getElementById('world').classList.contains('pnlm-container'),
+    hotspots: document.querySelectorAll('.go2-hs').length,
+    fwdHotspots: document.querySelectorAll('.go2-hs-fwd').length,
   })`);
 
-  // 2) enter a name and submit
+  // 3) wait for the greeting to open the name modal, then submit a name
+  await pollUntil(
+    `!document.getElementById('name-modal').classList.contains('hidden')`,
+    20000
+  );
   await evalJs(`(()=>{
     const i=document.getElementById('name-input'); i.value='Maria';
     document.getElementById('name-form').requestSubmit();
     return true;
   })()`, true);
-  await sleep(2500);
 
+  // 4) HUD activates after welcome + mission lines finish playing
+  await pollUntil(`document.getElementById('hud').classList.contains('active')`, 25000);
   const afterName = await evalJs(`JSON.stringify({
     hudActive: document.getElementById('hud').classList.contains('active'),
     hudIcon: document.getElementById('hud-icon').textContent,
     nameModalHidden: document.getElementById('name-modal').classList.contains('hidden'),
   })`);
 
+  // 5) walk one pano toward the station — progress bar should advance
+  const fillBefore = await evalJs(`document.getElementById('hud-fill').style.width`);
+  await evalJs(`document.querySelector('.go2-hs-fwd').click(); true`, true);
+  await sleep(3000); // scene fade + new pano + position emit
+  const nav = await evalJs(`JSON.stringify({
+    fillBefore: ${JSON.stringify(fillBefore || "0%")},
+    fillAfter: document.getElementById('hud-fill').style.width,
+    hotspots: document.querySelectorAll('.go2-hs').length,
+  })`);
+  const navObj = JSON.parse(nav);
+  const walked =
+    parseFloat(navObj.fillAfter) > parseFloat(navObj.fillBefore) && navObj.hotspots > 0;
+
+  const pageErrs = await evalJs(`JSON.stringify(window.__errs||[])`);
+  // Ignore the harmless missing-favicon 404.
+  const realErrors = errors.filter((e) => !/favicon\.ico/.test(e));
+  console.log("pageErrs  :", pageErrs);
   console.log("afterStart:", afterStart);
   console.log("afterName :", afterName);
-  console.log("errors    :", errors.length ? errors : "none");
-  console.log(
-    "warnings  :",
-    warnings.filter((w) => !/tts|play\(\)/i.test(w)).slice(0, 8)
-  );
+  console.log("nav step  :", nav, "walked:", walked);
+  console.log("errors    :", realErrors.length ? realErrors : "none");
+  console.log("warnings  :", warnings.filter((w) => !/favicon/.test(w)).slice(0, 8));
 
   ws.close();
-  // Non-zero exit if anything threw or core UI didn't come up.
   const a = JSON.parse(afterStart);
   const b = JSON.parse(afterName);
+  // Hard pass: the 360 world renders with no errors. HUD is reported too.
   const ok =
-    errors.length === 0 &&
+    realErrors.length === 0 &&
+    a.startGateHidden &&
     a.pannellum &&
     a.worldCanvas &&
     a.hotspots > 0 &&
-    b.hudActive;
+    b.hudActive &&
+    walked;
+  console.log("HUD active:", b.hudActive);
   console.log(ok ? "SMOKE: PASS ✅" : "SMOKE: FAIL ❌");
   process.exit(ok ? 0 : 1);
 }

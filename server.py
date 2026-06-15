@@ -40,6 +40,8 @@ except ImportError:  # pragma: no cover - friendly message instead of a stack tr
 ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / "public"
 CACHE_DIR = ROOT / "cache" / "tts"
+# Street View fixtures live outside public/ and are served under /imagery/.
+IMAGERY_DIR = ROOT / "street-view-imagery"
 
 # Voices are validated against this list before being passed to edge-tts so the
 # query string can't be used to request arbitrary remote work.
@@ -94,7 +96,26 @@ class GameHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/tts":
             self._handle_tts(parse_qs(parsed.query))
             return
+        if parsed.path.startswith("/imagery/"):
+            self._handle_imagery(parsed.path)
+            return
         super().do_GET()
+
+    def _handle_imagery(self, path: str):
+        # Map /imagery/<rest> -> street-view-imagery/<rest>, guarding traversal.
+        rel = path[len("/imagery/"):]
+        target = (IMAGERY_DIR / rel).resolve()
+        if not str(target).startswith(str(IMAGERY_DIR.resolve())) or not target.is_file():
+            self._send_json_error(404, "Imagery not found.")
+            return
+        ctype = "image/jpeg" if target.suffix.lower() in (".jpg", ".jpeg") else "application/octet-stream"
+        data = target.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _handle_tts(self, params: dict[str, list[str]]):
         text = (params.get("text", [""])[0] or "").strip()

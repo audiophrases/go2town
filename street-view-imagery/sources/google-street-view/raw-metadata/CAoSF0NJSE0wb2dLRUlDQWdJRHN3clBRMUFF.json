@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T13:12:32Z",
+  "query": {
+    "location": "41.1749186,1.5013870",
+    "radius": 50,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Alejandro Perez Vendopor",
+    "date": "2020-02",
+    "location": {
+      "lat": 41.17495028426601,
+      "lng": 1.501408973654211
+    },
+    "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJRHN3clBRMUFF",
+    "status": "OK"
+  }
+}

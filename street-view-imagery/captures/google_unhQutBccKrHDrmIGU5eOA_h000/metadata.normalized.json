@@ -1,0 +1,20 @@
+{
+  "attribution": "© Google",
+  "captured_at": "2013-10",
+  "fov": 90.0,
+  "heading": 0.0,
+  "height": 640,
+  "id": "google:unhQutBccKrHDrmIGU5eOA:h000",
+  "is_pano": true,
+  "lat": 41.17700847651792,
+  "license": "Google Maps Platform Terms of Service / Street View Static API terms",
+  "lon": 1.510757431048091,
+  "metadata_source_url": "https://maps.googleapis.com/maps/api/streetview/metadata",
+  "pano_id": "unhQutBccKrHDrmIGU5eOA",
+  "pitch": 0.0,
+  "provider": "google-street-view",
+  "raw_metadata_path": "captures/google_unhQutBccKrHDrmIGU5eOA_h000/metadata.raw.json",
+  "sequence_id": null,
+  "source_url": "https://maps.googleapis.com/maps/api/streetview",
+  "width": 640
+}

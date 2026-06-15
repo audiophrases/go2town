@@ -190,7 +190,7 @@ html, body {
 
 /* ---- 360° tour walking hotspots (Pannellum) ----------------------------- */
 /* Two-class selectors out-specificity Pannellum's default sprite hotspot. */
-.pnlm-hotspot.go2-hs {
+.pnlm-hotspot-base.go2-hs {
   width: 64px;
   height: 64px;
   margin: -32px 0 0 -32px;
@@ -205,10 +205,10 @@ html, body {
   cursor: pointer;
   animation: hsPulse 1.8s ease-in-out infinite;
 }
-.pnlm-hotspot.go2-hs:hover { transform: scale(1.1); }
-.pnlm-hotspot.go2-hs-fwd::after { content: "🚶"; }
-.pnlm-hotspot.go2-hs-back { opacity: 0.7; }
-.pnlm-hotspot.go2-hs-back::after { content: "↩️"; font-size: 26px; }
+.pnlm-hotspot-base.go2-hs:hover { transform: scale(1.1); }
+.pnlm-hotspot-base.go2-hs-fwd::after { content: "🚶"; }
+.pnlm-hotspot-base.go2-hs-back { opacity: 0.7; }
+.pnlm-hotspot-base.go2-hs-back::after { content: "↩️"; font-size: 26px; }
 @keyframes hsPulse {
   0%, 100% { box-shadow: 0 6px 16px rgba(11, 58, 74, 0.35); }
   50% { box-shadow: 0 6px 22px rgba(28, 167, 196, 0.8); }

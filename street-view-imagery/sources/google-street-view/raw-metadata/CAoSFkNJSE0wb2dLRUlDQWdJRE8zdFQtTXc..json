@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T13:15:23Z",
+  "query": {
+    "location": "41.1777932,1.5252570",
+    "radius": 50,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Roberto Nechifor",
+    "date": "2022-07",
+    "location": {
+      "lat": 41.17823896990939,
+      "lng": 1.525307095612937
+    },
+    "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJRE8zdFQtTXc.",
+    "status": "OK"
+  }
+}

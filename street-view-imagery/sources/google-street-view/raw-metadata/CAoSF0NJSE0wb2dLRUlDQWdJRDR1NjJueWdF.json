@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T12:44:28Z",
+  "query": {
+    "location": "41.1834747,1.5358089",
+    "radius": 80,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© David Flores",
+    "date": "2018-05",
+    "location": {
+      "lat": 41.1833112734139,
+      "lng": 1.535993994237445
+    },
+    "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJRDR1NjJueWdF",
+    "status": "OK"
+  }
+}

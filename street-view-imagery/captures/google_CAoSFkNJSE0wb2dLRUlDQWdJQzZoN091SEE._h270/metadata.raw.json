@@ -1,0 +1,28 @@
+{
+  "metadata_api": {
+    "metadata": {
+      "copyright": "© Expacia XR",
+      "date": "2021-09",
+      "location": {
+        "lat": 41.1768103342636,
+        "lng": 1.526855629030795
+      },
+      "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJQzZoN091SEE.",
+      "status": "OK"
+    },
+    "query_location": {
+      "lat": 41.176737333812426,
+      "lon": 1.5268566858567563
+    }
+  },
+  "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",
+  "provider": "google-street-view",
+  "static_api_request": {
+    "fov": 90.0,
+    "heading": 270.0,
+    "pano": "CAoSFkNJSE0wb2dLRUlDQWdJQzZoN091SEE.",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  }
+}

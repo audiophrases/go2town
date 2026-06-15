@@ -23,18 +23,26 @@ class Speaker {
   /** Call once from inside a real user gesture (e.g. the Start button). */
   async unlock() {
     if (this.unlocked) return;
+    this.unlocked = true; // set first: this must never block the game flow
     try {
       // A silent play/pause primes the audio element so later programmatic
-      // .play() calls are allowed.
+      // .play() calls are allowed. play() on an empty element can hang (e.g.
+      // headless Chrome), so cap the wait — priming still happened either way.
       this.audio.muted = true;
-      await this.audio.play().catch(() => {});
+      await Promise.race([
+        this.audio.play().catch(() => {}),
+        new Promise((r) => setTimeout(r, 400)),
+      ]);
+    } catch {
+      /* ignore */
+    }
+    try {
       this.audio.pause();
       this.audio.currentTime = 0;
-      this.audio.muted = false;
-      this.unlocked = true;
     } catch {
-      this.unlocked = true; // best effort; don't block the game
+      /* ignore */
     }
+    this.audio.muted = false;
   }
 
   _url(text, opts) {

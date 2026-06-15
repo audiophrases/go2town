@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T13:14:04Z",
+  "query": {
+    "location": "41.1763559,1.5252570",
+    "radius": 50,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Panoveo",
+    "date": "2023-06",
+    "location": {
+      "lat": 41.17655542632669,
+      "lng": 1.525476878167572
+    },
+    "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJQ0owODd4QVE.",
+    "status": "OK"
+  }
+}

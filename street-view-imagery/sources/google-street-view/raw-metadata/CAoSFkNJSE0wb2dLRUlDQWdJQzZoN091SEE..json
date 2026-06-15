@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T12:44:07Z",
+  "query": {
+    "location": "41.1767373,1.5268567",
+    "radius": 80,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Expacia XR",
+    "date": "2021-09",
+    "location": {
+      "lat": 41.1768103342636,
+      "lng": 1.526855629030795
+    },
+    "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJQzZoN091SEE.",
+    "status": "OK"
+  }
+}

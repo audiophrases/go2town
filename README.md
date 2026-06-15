@@ -35,17 +35,32 @@ The game runs **out of the box** with no API key — see below.
 
 ---
 
-## The town: 360° photos (free, the default)
+## The town: real 360° imagery (the default)
 
-The world is shown with your own **360° photos**, rendered by
-[Pannellum](https://pannellum.org/) (open-source, vendored locally — no key, no
-billing, works offline, scales to any number of students for **$0**).
+The world is rendered by [Pannellum](https://pannellum.org/) (open-source,
+vendored locally — no key, no billing, works offline). It walks a graph of
+360° **scenes**; each scene is shown as a cubemap you can look around in and
+step between via on-the-ground walking hotspots.
 
-Out of the box it generates **placeholder panoramas** so it's instantly
-playable. To show the **real Coma-ruga**, capture one 360° photo per waypoint
-and drop them in [`public/img/scenes/`](public/img/scenes/) — full walkthrough in
-**[`docs/CAPTURE_GUIDE.md`](docs/CAPTURE_GUIDE.md)**. Because it's your own town,
-the future shop mini-games can be the *real* bakery, ice-cream shop, and station.
+**Currently wired to the Coma-ruga Google Street View fixtures** in
+[`street-view-imagery/`](street-view-imagery/): 80 panos, each captured as four
+90° views (N/E/S/W) that map directly onto cubemap faces (top/bottom show sky).
+[`scripts/build_scenes.py`](scripts/build_scenes.py) reconstructs a walkable
+graph from their coordinates and writes
+[`comaruga.scenes.generated.js`](public/js/data/comaruga.scenes.generated.js).
+Regenerate after changing the imagery or graph tuning:
+
+```bash
+python scripts/build_scenes.py --write
+```
+
+> ⚠️ **Terms note:** Google Maps Platform terms restrict storing/redistributing
+> Street View imagery. This setup is fine for local classroom testing; don't
+> publicly redistribute the images. To own the imagery outright, capture your
+> own 360° photos — see [`docs/CAPTURE_GUIDE.md`](docs/CAPTURE_GUIDE.md) (drop
+> equirectangular files in [`public/img/scenes/`](public/img/scenes/) and set a
+> scene's `image`). Scenes with neither real imagery fall back to an
+> auto-generated placeholder panorama, so the game always runs.
 
 ### Other world providers (optional)
 
@@ -53,7 +68,7 @@ Set `worldProvider` in [`public/js/config.js`](public/js/config.js):
 
 | Value | Shows | Cost |
 | --- | --- | --- |
-| `"pano360"` *(default)* | Your own 360° photos | Free, offline, unlimited |
+| `"pano360"` *(default)* | The 360° scene graph (Street View fixtures / your own photos) | Free, offline, unlimited |
 | `"google"` | Google Street View | Needs a Maps JS API key **with billing**; bills per panorama load (not ideal at class scale) |
 | `"demo"` | A painted beach backdrop with walk buttons | Free, zero setup |
 

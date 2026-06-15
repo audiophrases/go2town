@@ -1,0 +1,18 @@
+{
+  "queried_at": "2026-06-15T13:14:09Z",
+  "query": {
+    "location": "41.1767153,1.5018644",
+    "radius": 50,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Xavi Casas",
+    "date": "2016-05",
+    "location": {
+      "lat": 41.17672954318998,
+      "lng": 1.50172752655911
+    },
+    "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJQzQ5NC1qX1FF",
+    "status": "OK"
+  }
+}
