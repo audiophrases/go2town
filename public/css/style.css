@@ -188,6 +188,27 @@ html, body {
 .replay-btn:hover { transform: scale(1.08); }
 .replay-btn:active { transform: scale(0.94); }
 
+/* ---- Always-visible "walk forward" button ------------------------------- */
+.walk-btn {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 42;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  cursor: pointer;
+  font-size: 42px;
+  background: rgba(255, 253, 247, 0.94);
+  box-shadow: var(--shadow);
+  animation: hsPulse 1.8s ease-in-out infinite;
+}
+.walk-btn.hidden { display: none; }
+.walk-btn:hover { transform: translateX(-50%) scale(1.07); }
+.walk-btn:active { transform: translateX(-50%) scale(0.94); }
+
 /* ---- 360° tour walking hotspots (Pannellum) ----------------------------- */
 /* Two-class selectors out-specificity Pannellum's default sprite hotspot. */
 .pnlm-hotspot-base.go2-hs {

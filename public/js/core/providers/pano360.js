@@ -117,6 +117,7 @@ export class Pano360World extends WorldBase {
     this.mode = "pano360";
     this.scenes = town.scenes;
     this._northOffsets = {};
+    this._forwardLink = {};
     const goal = town.locations.trainStation;
     const ids = Object.keys(this.scenes);
 
@@ -147,20 +148,23 @@ export class Pano360World extends WorldBase {
         ? sc.northOffset ?? 0
         : sc.northOffset ?? (fwd ? bearing(sc, this.scenes[fwd]) : 0);
       this._northOffsets[id] = northOffset;
+      this._forwardLink[id] = fwd;
 
-      const hotSpots = (sc.links || []).map((linkId) => {
-        const brg = bearing(sc, this.scenes[linkId]);
-        let yaw = ((brg - northOffset + 540) % 360) - 180; // -> (-180,180]
-        return {
-          type: "scene",
-          sceneId: linkId,
-          yaw,
-          pitch: -22, // sits on the ground like footsteps
-          cssClass: linkId === fwd ? "go2-hs go2-hs-fwd" : "go2-hs go2-hs-back",
-        };
-      });
+      const toYaw = (linkId) =>
+        ((bearing(sc, this.scenes[linkId]) - northOffset + 540) % 360) - 180;
 
-      const common = { northOffset, hfov: 110, yaw: 0, pitch: 0, hotSpots };
+      const hotSpots = (sc.links || []).map((linkId) => ({
+        type: "scene",
+        sceneId: linkId,
+        yaw: toYaw(linkId),
+        pitch: -22, // sits on the ground like footsteps
+        cssClass: linkId === fwd ? "go2-hs go2-hs-fwd" : "go2-hs go2-hs-back",
+      }));
+
+      // Spawn each pano already facing the way forward, so the 🚶 hotspot is
+      // dead-ahead instead of hidden behind the camera.
+      const initialYaw = fwd ? toYaw(fwd) : 0;
+      const common = { northOffset, hfov: 110, yaw: initialYaw, pitch: 0, hotSpots };
       if (sc.cube) {
         builtScenes[id] = { type: "cubemap", cubeMap: cubeFaces(id), ...common };
       } else if (sc.image) {
@@ -218,10 +222,20 @@ export class Pano360World extends WorldBase {
   _setScene(id) {
     const sc = this.scenes[id];
     if (!sc) return;
+    this._currentScene = id;
     this.position = { lat: sc.lat, lng: sc.lng };
     this._currentNorthOffset = this._northOffsets[id] ?? 0;
-    this.heading = this._currentNorthOffset; // looking forward by default
+    const fwd = this._forwardLink[id];
+    // We spawn facing the forward link, so report that as the heading.
+    this.heading = fwd ? bearing(sc, this.scenes[fwd]) : this._currentNorthOffset;
     this._emit();
+  }
+
+  /** Always-available step toward the goal (powers the on-screen walk button). */
+  walkForward() {
+    const fwd = this._forwardLink?.[this._currentScene];
+    if (fwd && this.viewer) this.viewer.loadScene(fwd);
+    return !!fwd;
   }
 }
 

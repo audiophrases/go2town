@@ -26,6 +26,7 @@ const dom = {
   nameForm: el("name-form"),
   nameInput: el("name-input"),
   coco: el("coco"),
+  walkBtn: el("walk-btn"),
   caption: el("caption"),
   hud: el("hud"),
   hudIcon: el("hud-icon"),
@@ -63,6 +64,13 @@ dom.startBtn.addEventListener("click", async () => {
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
   dom.coco.classList.remove("hidden");
+
+  // Reliable movement control for 360 worlds (don't rely on spotting hotspots).
+  if (typeof world.walkForward === "function") {
+    dom.walkBtn.classList.remove("hidden");
+    dom.walkBtn.addEventListener("click", () => world.walkForward());
+  }
+
   runIntro();
 });
 

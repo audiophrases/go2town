@@ -1,0 +1,20 @@
+{
+  "attribution": "© Roberto Nechifor",
+  "captured_at": "2022-07",
+  "fov": 90.0,
+  "heading": 0.0,
+  "height": 640,
+  "id": "google:CAoSFkNJSE0wb2dLRUlDQWdJRE8zdFQtTXc.:h000",
+  "is_pano": true,
+  "lat": 41.17823896990939,
+  "license": "Google Maps Platform Terms of Service / Street View Static API terms",
+  "lon": 1.525307095612937,
+  "metadata_source_url": "https://maps.googleapis.com/maps/api/streetview/metadata",
+  "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJRE8zdFQtTXc.",
+  "pitch": 0.0,
+  "provider": "google-street-view",
+  "raw_metadata_path": "captures/google_CAoSFkNJSE0wb2dLRUlDQWdJRE8zdFQtTXc._h000/metadata.raw.json",
+  "sequence_id": null,
+  "source_url": "https://maps.googleapis.com/maps/api/streetview",
+  "width": 640
+}
