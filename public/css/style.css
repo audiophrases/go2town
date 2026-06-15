@@ -1,0 +1,304 @@
+/* ===========================================================================
+   go2town — Coma-ruga
+   A bright, wordless, beach-town look. The learner reads almost nothing:
+   the UI is icons, the language is sound.
+   =========================================================================== */
+
+:root {
+  --sea: #1ca7c4;
+  --sea-deep: #0e7490;
+  --sand: #f6e3b4;
+  --sun: #ffd24a;
+  --coral: #ff7a59;
+  --ink: #0b3a4a;
+  --paper: #fffdf7;
+  --shadow: 0 10px 30px rgba(11, 58, 74, 0.25);
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  background: var(--ink);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#world {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Overlays (start gate, name modal) ---------------------------------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 30%, rgba(28, 167, 196, 0.55), rgba(11, 58, 74, 0.85));
+  backdrop-filter: blur(6px);
+}
+.overlay.hidden { display: none; }
+
+.start-card,
+.name-card {
+  background: var(--paper);
+  border-radius: 28px;
+  padding: 34px 40px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: pop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.coco-big { font-size: 84px; animation: bob 2.2s ease-in-out infinite; }
+.town-badge {
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--sea-deep);
+  font-size: 20px;
+  text-transform: uppercase;
+}
+.start-hint { color: #888; font-size: 14px; }
+
+/* ---- Buttons ------------------------------------------------------------ */
+.big-btn {
+  border: none;
+  cursor: pointer;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font-size: 36px;
+  color: white;
+  background: linear-gradient(160deg, var(--coral), #ff5a36);
+  box-shadow: 0 8px 18px rgba(255, 90, 54, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.big-btn:hover { transform: translateY(-2px) scale(1.04); }
+.big-btn:active { transform: scale(0.96); }
+
+/* ---- Name input --------------------------------------------------------- */
+.name-card { gap: 22px; }
+.name-input {
+  font-size: 28px;
+  text-align: center;
+  padding: 14px 20px;
+  width: 260px;
+  border: 3px solid var(--sea);
+  border-radius: 18px;
+  outline: none;
+  color: var(--ink);
+  background: #fff;
+}
+.name-input:focus { border-color: var(--coral); }
+
+/* ---- Coco avatar -------------------------------------------------------- */
+.coco-avatar {
+  font-size: 64px;
+  line-height: 1;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+}
+.coco-avatar.floating {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 40;
+  font-size: 72px;
+  cursor: pointer;
+}
+.coco-avatar.hidden { display: none; }
+/* "speaking" bob while Coco talks */
+.coco-avatar.speaking { animation: talk 0.5s ease-in-out infinite; }
+
+/* ---- Mission HUD -------------------------------------------------------- */
+.hud {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-160%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 253, 247, 0.92);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  transition: transform 0.4s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.hud.active { transform: translateX(-50%) translateY(0); }
+.hud.near { box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.5), var(--shadow); }
+
+.hud-target {
+  font-size: 30px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: #eaf7fb;
+  border-radius: 50%;
+}
+.hud-arrow-wrap {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+.hud-arrow {
+  font-size: 28px;
+  display: inline-block;
+  transition: transform 0.25s ease;
+  transform-origin: 50% 50%;
+}
+.hud-progress {
+  width: 120px;
+  height: 12px;
+  background: #e3e9ec;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.hud-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--sea), #2ecc71);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.replay-btn {
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--sun);
+  box-shadow: 0 4px 10px rgba(255, 210, 74, 0.6);
+  transition: transform 0.12s ease;
+}
+.replay-btn:hover { transform: scale(1.08); }
+.replay-btn:active { transform: scale(0.94); }
+
+/* ---- 360° tour walking hotspots (Pannellum) ----------------------------- */
+/* Two-class selectors out-specificity Pannellum's default sprite hotspot. */
+.pnlm-hotspot.go2-hs {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.92);
+  background-image: none;
+  box-shadow: 0 6px 16px rgba(11, 58, 74, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  cursor: pointer;
+  animation: hsPulse 1.8s ease-in-out infinite;
+}
+.pnlm-hotspot.go2-hs:hover { transform: scale(1.1); }
+.pnlm-hotspot.go2-hs-fwd::after { content: "🚶"; }
+.pnlm-hotspot.go2-hs-back { opacity: 0.7; }
+.pnlm-hotspot.go2-hs-back::after { content: "↩️"; font-size: 26px; }
+@keyframes hsPulse {
+  0%, 100% { box-shadow: 0 6px 16px rgba(11, 58, 74, 0.35); }
+  50% { box-shadow: 0 6px 22px rgba(28, 167, 196, 0.8); }
+}
+
+/* ---- Demo backdrop (no API key) ----------------------------------------- */
+.demo-world { overflow: hidden; }
+.demo-scene { position: absolute; inset: 0; }
+.demo-sky {
+  position: absolute; inset: 0 0 38% 0;
+  background: linear-gradient(180deg, #aee3f5 0%, #e8f8ff 100%);
+}
+.demo-sea {
+  position: absolute; left: 0; right: 0; top: 50%; height: 18%;
+  background: linear-gradient(180deg, var(--sea) 0%, var(--sea-deep) 100%);
+}
+.demo-sand {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 32%;
+  background: linear-gradient(180deg, #f6e3b4 0%, #e9cf92 100%);
+}
+.demo-scene::after {
+  content: "☀️";
+  position: absolute; top: 6%; right: 10%; font-size: 64px;
+}
+.demo-note {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  background: rgba(11, 58, 74, 0.75); color: #fff; padding: 8px 16px;
+  border-radius: 999px; font-size: 13px; white-space: nowrap;
+}
+.demo-walk {
+  position: absolute; right: 22px; bottom: 26px; z-index: 30;
+  display: flex; gap: 12px;
+}
+.demo-btn {
+  width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+  font-size: 28px; background: var(--paper); box-shadow: var(--shadow);
+}
+.demo-btn:active { transform: scale(0.94); }
+
+/* ---- Dev caption + panel ------------------------------------------------ */
+.caption {
+  position: fixed;
+  bottom: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 45;
+  max-width: 80vw;
+  background: rgba(11, 58, 74, 0.8);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.caption.show { opacity: 1; }
+
+.dev-panel {
+  position: fixed;
+  top: 12px; right: 12px;
+  z-index: 60;
+  display: flex; gap: 8px;
+}
+.dev-panel.hidden { display: none; }
+.dev-panel button {
+  cursor: pointer;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(11, 58, 74, 0.85);
+  color: #fff;
+  font-size: 13px;
+}
+
+/* ---- Subgame overlay (future phases) ------------------------------------ */
+.subgame-overlay {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(11, 58, 74, 0.9);
+  display: grid; place-items: center;
+}
+.subgame-host {
+  width: min(900px, 92vw); height: min(620px, 86vh);
+  background: var(--paper); border-radius: 24px; box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ---- Animations --------------------------------------------------------- */
+@keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes talk {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}

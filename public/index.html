@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>go2town · Coma-ruga</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- The world: a Google Street View panorama (or a demo backdrop). -->
+    <div id="world"></div>
+
+    <!-- Start gate: needed to unlock audio (browser autoplay policy). -->
+    <div id="start-gate" class="overlay">
+      <div class="start-card">
+        <div class="coco-big">🐦</div>
+        <div class="town-badge">Coma-ruga</div>
+        <button id="start-btn" class="big-btn">▶</button>
+        <div class="start-hint">🔊 sound on</div>
+      </div>
+    </div>
+
+    <!-- Name modal: the one moment the learner types — their own name. -->
+    <div id="name-modal" class="overlay hidden">
+      <form id="name-form" class="name-card" autocomplete="off">
+        <div class="coco-avatar" id="modal-avatar">🐦</div>
+        <input
+          id="name-input"
+          class="name-input"
+          type="text"
+          maxlength="24"
+          placeholder="🙂…"
+          aria-label="your name"
+          required
+        />
+        <button type="submit" class="big-btn">✓</button>
+      </form>
+    </div>
+
+    <!-- Persistent narrator avatar (Coco) -->
+    <div id="coco" class="coco-avatar floating hidden" title="Coco">🐦</div>
+
+    <!-- Mission HUD: icons only, no written English. -->
+    <div id="hud" class="hud">
+      <div class="hud-target"><span id="hud-icon">🚉</span></div>
+      <div class="hud-arrow-wrap"><span id="hud-arrow" class="hud-arrow">⬆️</span></div>
+      <div class="hud-progress"><div id="hud-fill" class="hud-fill"></div></div>
+      <button id="replay-btn" class="replay-btn" title="listen again">🔊</button>
+    </div>
+
+    <!-- Dev caption (only shown when CONFIG.debug is true) -->
+    <div id="caption" class="caption"></div>
+
+    <!-- Dev panel (only shown when CONFIG.debug is true) -->
+    <div id="dev-panel" class="dev-panel hidden">
+      <button id="dev-arrive">⏭️ force arrive</button>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+  </body>
+</html>

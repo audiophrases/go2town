@@ -1,0 +1,3 @@
+# go2town backend dependencies
+# The only hard requirement: Microsoft Edge's natural-sounding TTS voices.
+edge-tts>=6.1.9
