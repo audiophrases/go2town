@@ -5,12 +5,14 @@
 //   ▶ start  → unlock audio
 //   Coco greets and asks the learner's name
 //   learner types their name (the only text they ever type)
-//   Coco welcomes them by name and gives mission #1: go to the train station
-//   learner walks Street View → Coco nudges them closer → arrival celebration
+//   Coco welcomes them, then a tour of real Coma-ruga shops: ice-cream shop,
+//   bakery, supermarket, pharmacy — walking 360° Street View to each, with
+//   Coco's spoken nudges and an arrival celebration (+ subgame hook).
 // ---------------------------------------------------------------------------
 
 import { CONFIG } from "./config.js";
 import { TOWN } from "./data/comaruga.js";
+import { MISSIONS } from "./data/comaruga.missions.js";
 import { speaker } from "./core/tts.js";
 import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
@@ -65,10 +67,22 @@ dom.startBtn.addEventListener("click", async () => {
   await world.init({ container: dom.world, town: TOWN });
   dom.coco.classList.remove("hidden");
 
-  // Reliable movement control for 360 worlds (don't rely on spotting hotspots).
-  if (typeof world.walkForward === "function") {
+  // Hold-to-drive walk button for touch/mouse (keyboard ↑/W works too).
+  if (typeof world.startWalk === "function") {
     dom.walkBtn.classList.remove("hidden");
-    dom.walkBtn.addEventListener("click", () => world.walkForward());
+    const start = (e) => {
+      e.preventDefault();
+      dom.walkBtn.classList.add("pressed");
+      world.startWalk();
+    };
+    const stop = () => {
+      dom.walkBtn.classList.remove("pressed");
+      world.stopWalk();
+    };
+    dom.walkBtn.addEventListener("pointerdown", start);
+    dom.walkBtn.addEventListener("pointerup", stop);
+    dom.walkBtn.addEventListener("pointerleave", stop);
+    dom.walkBtn.addEventListener("pointercancel", stop);
   }
 
   runIntro();
@@ -94,43 +108,42 @@ dom.nameForm.addEventListener("submit", async (e) => {
   dom.nameModal.classList.add("hidden");
 
   await coco.say(SCRIPT.welcome(name));
-  await coco.say(SCRIPT.firstMission());
-  startTrainStationMission(name);
+  runMissions(name);
 });
 
-// ---- Mission #1: go to the train station ----------------------------------
-function startTrainStationMission(name) {
-  const station = TOWN.locations.trainStation;
-
-  // Turn the configured distance thresholds into spoken nudges:
-  // the nearest threshold gets the "almost there" line, the rest "getting closer".
+// Turn the configured distance thresholds into spoken nudges. remember:false so
+// the 🔊 button always replays the mission instruction, not the latest nudge.
+function buildNudges() {
   const sorted = [...CONFIG.proximityNudges].sort((a, b) => a - b);
-  // remember:false so the 🔊 button always replays the mission instruction,
-  // not the most recent "getting closer" nudge.
-  const nudges = sorted.map((meters, i) => ({
+  return sorted.map((meters, i) => ({
     atMeters: meters,
     say: () =>
-      coco.say(i === 0 ? SCRIPT.nudgeClose() : SCRIPT.nudgeCloser(), {
-        remember: false,
-      }),
+      coco.say(i === 0 ? SCRIPT.nudgeClose() : SCRIPT.nudgeCloser(), { remember: false }),
   }));
+}
 
-  missions
-    .run({
-      icon: station.icon,
-      target: { lat: station.lat, lng: station.lng },
+// ---- The tour: walk to each real shop in turn ------------------------------
+async function runMissions(name) {
+  for (const m of MISSIONS) {
+    // Point the world's "forward" guidance (walk button + auto-facing) at this
+    // mission's target, then announce it.
+    if (typeof world.setGoal === "function") world.setGoal(m.target);
+    await coco.say(m.mission(name));
+
+    await missions.run({
+      icon: m.icon,
+      target: m.target,
       radius: CONFIG.arrivalRadiusMeters,
-      nudges,
+      nudges: buildNudges(),
       onArrive: async () => {
-        await coco.say(SCRIPT.arrival(name));
-        // If a 2D subgame is registered for this spot, play it. (Phase Two.)
-        if (station.subgame && hasSubgame(station.subgame)) {
-          await launchSubgame(station.subgame, { name, location: station });
+        await coco.say(m.arrival(name));
+        // Future: a 2D "room" for this shop. Stub returns immediately for now.
+        if (m.subgame && hasSubgame(m.subgame)) {
+          await launchSubgame(m.subgame, { name, mission: m });
         }
       },
-    })
-    .then(() => {
-      // Phase One ends here. The hook for mission #2 lives at this point.
-      console.info(`[game] ${name} completed mission #1 (train station).`);
     });
+    console.info(`[game] ${name} reached "${m.id}" (${m.poi.name}).`);
+  }
+  await coco.say(SCRIPT.allDone(name));
 }

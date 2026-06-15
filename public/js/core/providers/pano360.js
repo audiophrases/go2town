@@ -15,7 +15,8 @@
 // ---------------------------------------------------------------------------
 
 import { WorldBase } from "../worldBase.js";
-import { bearing } from "../geo.js";
+import { bearing, haversine } from "../geo.js";
+import { CONFIG } from "../../config.js";
 import { installDemoBackdrop } from "./demo.js";
 
 function ensurePannellum() {
@@ -117,30 +118,15 @@ export class Pano360World extends WorldBase {
     this.mode = "pano360";
     this.scenes = town.scenes;
     this._northOffsets = {};
-    this._forwardLink = {};
-    const goal = town.locations.trainStation;
+    // The current "goal" the walk button + auto-facing aim at. Missions update
+    // it via setGoal(); default to the configured station.
+    this._goal = town.locations.trainStation;
     const ids = Object.keys(this.scenes);
-
-    // Which neighbour of a scene leads toward the goal? (used to face the photo
-    // "forward" and to flag the forward walking hotspot).
-    const forwardLinkOf = (id) => {
-      const links = this.scenes[id].links || [];
-      let best = null;
-      let bestDist = Infinity;
-      for (const l of links) {
-        const dist = nearnessTo(this.scenes[l], goal);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = l;
-        }
-      }
-      return best;
-    };
 
     const builtScenes = {};
     ids.forEach((id, idx) => {
       const sc = this.scenes[id];
-      const fwd = forwardLinkOf(id);
+      const fwd = this._linkNearestTo(id, this._goal);
       // Cubemap scenes (Google Street View faces) are north-aligned: the front
       // face looks at compass heading 0, so yaw 0 == north (northOffset 0).
       // Placeholder/equirect scenes default to facing the next waypoint.
@@ -148,21 +134,21 @@ export class Pano360World extends WorldBase {
         ? sc.northOffset ?? 0
         : sc.northOffset ?? (fwd ? bearing(sc, this.scenes[fwd]) : 0);
       this._northOffsets[id] = northOffset;
-      this._forwardLink[id] = fwd;
 
       const toYaw = (linkId) =>
         ((bearing(sc, this.scenes[linkId]) - northOffset + 540) % 360) - 180;
 
+      // All links are walkable footsteps; the HUD arrow, auto-facing, and walk
+      // button (all goal-aware) supply the direction, so no baked fwd/back.
       const hotSpots = (sc.links || []).map((linkId) => ({
         type: "scene",
         sceneId: linkId,
         yaw: toYaw(linkId),
         pitch: -22, // sits on the ground like footsteps
-        cssClass: linkId === fwd ? "go2-hs go2-hs-fwd" : "go2-hs go2-hs-back",
+        cssClass: "go2-hs go2-hs-fwd",
       }));
 
-      // Spawn each pano already facing the way forward, so the 🚶 hotspot is
-      // dead-ahead instead of hidden behind the camera.
+      // Spawn each pano facing the goal so the way forward is dead-ahead.
       const initialYaw = fwd ? toYaw(fwd) : 0;
       const common = { northOffset, hfov: 110, yaw: initialYaw, pitch: 0, hotSpots };
       if (sc.cube) {
@@ -190,7 +176,7 @@ export class Pano360World extends WorldBase {
         compass: false,
         draggable: true,
         mouseZoom: true,
-        sceneFadeDuration: 600,
+        sceneFadeDuration: CONFIG.move?.fadeMs ?? 300,
         hfov: 110,
       },
       scenes: builtScenes,
@@ -198,6 +184,7 @@ export class Pano360World extends WorldBase {
 
     this._setScene(town.startScene);
     this.viewer.on("scenechange", (id) => this._setScene(id));
+    this._initControls();
 
     // Keep heading live as the learner looks around (Pannellum has no yaw event).
     const tick = () => {
@@ -225,17 +212,159 @@ export class Pano360World extends WorldBase {
     this._currentScene = id;
     this.position = { lat: sc.lat, lng: sc.lng };
     this._currentNorthOffset = this._northOffsets[id] ?? 0;
-    const fwd = this._forwardLink[id];
-    // We spawn facing the forward link, so report that as the heading.
-    this.heading = fwd ? bearing(sc, this.scenes[fwd]) : this._currentNorthOffset;
+    // Heading is kept from the view (driving preserves it); the rAF loop syncs
+    // it from the actual yaw on the next frame.
     this._emit();
   }
 
-  /** Always-available step toward the goal (powers the on-screen walk button). */
-  walkForward() {
-    const fwd = this._forwardLink?.[this._currentScene];
-    if (fwd && this.viewer) this.viewer.loadScene(fwd);
-    return !!fwd;
+  /** The neighbour of `id` closest to a goal {lat,lng}. */
+  _linkNearestTo(id, goal) {
+    if (!goal) return null;
+    let best = null;
+    let bestDist = Infinity;
+    for (const l of this.scenes[id]?.links || []) {
+      const d = nearnessTo(this.scenes[l], goal);
+      if (d < bestDist) {
+        bestDist = d;
+        best = l;
+      }
+    }
+    return best;
+  }
+
+  /** Point the view (yaw) at the current goal in the current scene. */
+  _faceView() {
+    if (!this.viewer || !this._currentScene || !this._goal) return;
+    const sc = this.scenes[this._currentScene];
+    const yaw =
+      ((bearing(sc, this._goal) - (this._northOffsets[this._currentScene] || 0) + 540) % 360) - 180;
+    try {
+      this.viewer.setYaw(yaw, false);
+    } catch {
+      /* viewer mid-transition */
+    }
+  }
+
+  /** New mission target: turn the view to face it once (orientation assist). */
+  setGoal(goal) {
+    if (goal) this._goal = goal;
+    this._faceView();
+  }
+
+  // ---- Hold-to-drive movement -------------------------------------------
+  // Hold ↑/W (or the 🚶 button) to flow forward through panos in the direction
+  // you're looking; ←/→ or A/D steer; ↓/S reverses. Mouse-drag still looks
+  // around. Speed is distance-based (CONFIG.move) for a "driving" feel.
+
+  _initControls() {
+    const m = CONFIG.move || {};
+    this._coneDeg = m.forwardConeDeg ?? 80;
+    this._turnSpeed = m.turnDegPerSec ?? 80;
+    this._move = 0; // -1 back, 0 stop, +1 forward
+    this._turn = 0; // -1 left, +1 right
+    this._driving = false;
+
+    const typing = () => {
+      const el = document.activeElement;
+      return el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    };
+    const KEY = {
+      ArrowUp: "f", KeyW: "f", ArrowDown: "b", KeyS: "b",
+      ArrowLeft: "l", KeyA: "l", ArrowRight: "r", KeyD: "r",
+    };
+
+    this._onKey = (down) => (e) => {
+      const a = KEY[e.code];
+      if (!a || typing()) return; // never swallow keys while typing a name
+      e.preventDefault();
+      e.stopImmediatePropagation(); // override Pannellum's own arrow handling
+      if (a === "f") this._setMove(down ? 1 : this._move === 1 ? 0 : this._move);
+      else if (a === "b") this._setMove(down ? -1 : this._move === -1 ? 0 : this._move);
+      else if (a === "l") this._turn = down ? -1 : this._turn === -1 ? 0 : this._turn;
+      else if (a === "r") this._turn = down ? 1 : this._turn === 1 ? 0 : this._turn;
+    };
+    window.addEventListener("keydown", this._onKey(true), true);
+    window.addEventListener("keyup", this._onKey(false), true);
+
+    // Smooth steering loop (independent of the hop scheduler).
+    let last = performance.now();
+    const turnLoop = (ts) => {
+      const dt = (ts - last) / 1000;
+      last = ts;
+      if (this._turn && this.viewer) {
+        try {
+          this.viewer.setYaw(this.viewer.getYaw() + this._turn * this._turnSpeed * dt, false);
+        } catch {
+          /* mid-transition */
+        }
+      }
+      this._turnRaf = requestAnimationFrame(turnLoop);
+    };
+    this._turnRaf = requestAnimationFrame(turnLoop);
+  }
+
+  /** Start/stop driving forward — used by the on-screen 🚶 button (hold). */
+  startWalk() { this._setMove(1); }
+  stopWalk() { this._setMove(0); }
+
+  _setMove(dir) {
+    this._move = dir;
+    if (dir !== 0 && !this._driving) {
+      this._driving = true;
+      this._driveTick();
+    }
+  }
+
+  _driveTick() {
+    if (this._move === 0) {
+      this._driving = false;
+      return;
+    }
+    const m = CONFIG.move || {};
+    const next = this._directionalLink(this._move === 1 ? 0 : 180);
+    let wait = 150; // nothing ahead — re-check soon (you may turn)
+    if (next) {
+      const dist = haversine(this.scenes[this._currentScene], this.scenes[next]) || (m.refMeters ?? 40);
+      this._hopTo(next);
+      const base = (m.hopBaseMs ?? 480) * (dist / (m.refMeters ?? 40));
+      wait = Math.min(m.hopMaxMs ?? 850, Math.max(m.hopMinMs ?? 260, base));
+    }
+    this._driveTimer = setTimeout(() => this._driveTick(), wait);
+  }
+
+  /** The neighbouring pano nearest the direction `relDeg` from the current view. */
+  _directionalLink(relDeg) {
+    const cur = this.scenes[this._currentScene];
+    if (!cur || !this.viewer) return null;
+    let viewHeading;
+    try {
+      viewHeading = (this._currentNorthOffset + this.viewer.getYaw() + 360) % 360;
+    } catch {
+      return null;
+    }
+    const target = (viewHeading + relDeg) % 360;
+    let best = null;
+    let bestDiff = Infinity;
+    for (const l of cur.links || []) {
+      const diff = Math.abs(((bearing(cur, this.scenes[l]) - target + 540) % 360) - 180);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = l;
+      }
+    }
+    return bestDiff <= this._coneDeg ? best : null;
+  }
+
+  /** Load a neighbour while preserving the current look direction (smooth drive). */
+  _hopTo(next) {
+    if (!this.viewer) return;
+    try {
+      const viewHeading = (this._currentNorthOffset + this.viewer.getYaw() + 360) % 360;
+      const newYaw = ((viewHeading - (this._northOffsets[next] || 0) + 540) % 360) - 180;
+      this.viewer.loadScene(next, this.viewer.getPitch(), newYaw, this.viewer.getHfov());
+    } catch {
+      /* mid-transition; the next tick retries */
+    }
   }
 }
 

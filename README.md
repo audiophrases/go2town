@@ -7,15 +7,20 @@ Edge neural TTS) and gives you little **missions**. Some shops and spots around
 town will open into small 2D mini-games (later phases).
 
 **Phase One** ships the town of **Coma-ruga** (a beach town near Tarragona,
-Spain) and the first mission:
+Spain) and a little tour of its **real shops**:
 
 > Coco: *"Hello! I am Coco… What is your name?"*
 > → you type your name →
-> Coco: *"Nice to meet you, **\<name\>**! … Go to the **train station**!"*
-> → you walk the town to the station → Coco celebrates. 🎉
+> Coco: *"Nice to meet you, **\<name\>**! … Let's get an ice cream! Find the
+> ice cream shop!"*
+> → you walk the 360° town to it → Coco celebrates → next: the bakery 🥖,
+> the supermarket 🛒, the pharmacy 💊. 🎉
 
-The learner only ever **hears** English. The on-screen UI is icons only
-(🚉 destination, an arrow, a progress bar, and a 🔊 "listen again" button).
+Mission targets are **real businesses** pulled from OpenStreetMap (the actual
+*La Jijonenca* ice-cream shop, *Condis* supermarket, etc.), so the places exist
+where you walk. The learner only ever **hears** English; the on-screen UI is
+icons only (a destination icon, an arrow, a progress bar, a 🔊 "listen again"
+button, and a 🚶 walk button).
 
 ---
 
@@ -107,20 +112,28 @@ Default is `en-US-AvaNeural` (very natural). Others are allow-listed in both
 - **No written English.** Output is sound; UI is icons. Reading is never required.
 - **Repetition is free.** The 🔊 button (and tapping Coco) replays any instruction.
 - **Comprehensible input.** Short sentences, concrete nouns, key words repeated
-  (*"the train station… the trains"*), meaning supported by the visible world.
+  (*"the ice cream shop… one ice cream, please"*), meaning supported by the
+  visible world.
 - **Do, don't translate.** You demonstrate understanding by *acting* (walking to
-  the station), not by answering a quiz.
+  the shop), not by answering a quiz.
 
 ---
 
 ## Roadmap
 
-- **Phase One ✅** — Coma-ruga + intro (name) + mission #1 (train station), with
-  the free 360° world.
-- **Phase Two** — 2D subgames in buildings: buy a ticket 🚉, order bread 🥖,
-  order an ice cream 🍦. Register them in `core/subgames.js`; spots are already
-  scaffolded in `data/comaruga.js`.
-- **Later** — more missions, "repeat after me" speaking practice, more towns.
+- **Phase One ✅** — Coma-ruga + intro (name) + a tour of real shops
+  (ice-cream 🍦 → bakery 🥖 → supermarket 🛒 → pharmacy 💊), in the free 360°
+  world built from Street View imagery.
+- **Phase Two** — 2D subgames inside each shop: order an ice cream 🍦, buy bread
+  🥖, etc. Register them in `core/subgames.js` against the `subgame` id already
+  set on each mission in [`data/comaruga.missions.js`](public/js/data/comaruga.missions.js).
+- **Later** — more towns, "repeat after me" speaking practice, the train-station
+  mission once coverage there is solid.
 
-To add the next mission, follow the hook at the end of
-[`startTrainStationMission`](public/js/game.js).
+### Adding / editing missions
+
+Missions are data: edit [`comaruga.missions.js`](public/js/data/comaruga.missions.js).
+Each entry names a real OSM business (`match`), an `icon`, and Coco's spoken
+`mission`/`arrival` lines; the target resolves to the nearest reachable pano
+automatically. Re-run `scripts/build_scenes.py --write` and
+`scripts/osm_lookup.py` whenever the imagery changes.

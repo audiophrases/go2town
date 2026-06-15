@@ -42,12 +42,17 @@ def haversine(a, b):
 
 
 def load_nodes():
-    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    """Read every pano on disk (manifest.json can lag behind capture sessions)."""
+    captures = IMG_DIR / "captures"
     nodes = {}
-    for cap in data["captures"]:
-        pano = cap["id"].split(":")[1]
-        if pano not in nodes:
-            nodes[pano] = {"id": pano, "lat": cap["lat"], "lon": cap["lon"]}
+    for meta in captures.glob("*/metadata.normalized.json"):
+        try:
+            d = json.loads(meta.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        pano = d.get("pano_id")
+        if pano and pano not in nodes and d.get("lat") is not None:
+            nodes[pano] = {"id": pano, "lat": d["lat"], "lon": d["lon"]}
     return nodes
 
 

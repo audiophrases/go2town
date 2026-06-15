@@ -22,23 +22,19 @@ export const SCRIPT = {
 
   welcome: (name) =>
     `${name}! Nice to meet you, ${name}! ` +
-    "Welcome to Coma-ruga, by the sea.",
-
-  firstMission: () =>
-    "Now, your first mission. Are you ready? " +
-    "Go to the train station. The train station! " +
-    "Look for the trains. Follow my arrow. Let's go!",
+    "Welcome to Coma-ruga, by the sea. Are you ready for an adventure?",
 
   // Spoken when the learner gets meaningfully closer to the target.
   nudgeCloser: () => "Yes! You are getting closer! Keep going!",
-  nudgeClose: () => "Almost there! The train station is very close now!",
+  nudgeClose: () => "Almost there! It is very close now!",
 
   // Spoken if the learner wanders the wrong way for a while.
-  nudgeFar: () => "Hmm, this way is far. Follow my arrow. Find the trains!",
+  nudgeFar: () => "Hmm, this way is far. Follow my arrow!",
 
-  arrival: (name) =>
-    `You did it, ${name}! Hooray! This is the train station. ` +
-    "Listen — the trains! Choo choo! Wonderful job!",
+  // After every mission is done.
+  allDone: (name) =>
+    `Wow, ${name}! You did it! You walked all around my town. ` +
+    "Ice cream, bread, shopping — what a day! You are amazing. See you soon!",
 
   replayHint: () => "Listen again.",
 };

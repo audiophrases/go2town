@@ -207,7 +207,13 @@ html, body {
 }
 .walk-btn.hidden { display: none; }
 .walk-btn:hover { transform: translateX(-50%) scale(1.07); }
-.walk-btn:active { transform: translateX(-50%) scale(0.94); }
+.walk-btn:active,
+.walk-btn.pressed {
+  transform: translateX(-50%) scale(0.92);
+  background: var(--sun);
+  animation: none;
+}
+.walk-btn { touch-action: none; } /* let pointer-hold work on touch */
 
 /* ---- 360° tour walking hotspots (Pannellum) ----------------------------- */
 /* Two-class selectors out-specificity Pannellum's default sprite hotspot. */

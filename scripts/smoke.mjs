@@ -134,10 +134,13 @@ async function main() {
     nameModalHidden: document.getElementById('name-modal').classList.contains('hidden'),
   })`);
 
-  // 5) walk one pano toward the station — progress bar should advance
+  // 5) hold ↑ to drive forward — progress bar should advance over several hops
   const fillBefore = await evalJs(`document.getElementById('hud-fill').style.width`);
-  await evalJs(`document.querySelector('.go2-hs-fwd').click(); true`, true);
-  await sleep(3000); // scene fade + new pano + position emit
+  await evalJs(`(()=>{ if(document.activeElement) document.activeElement.blur();
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'ArrowUp'})); return true })()`, true);
+  await sleep(3000); // several driving hops
+  await evalJs(`window.dispatchEvent(new KeyboardEvent('keyup',{code:'ArrowUp'})); true`);
+  await sleep(500);
   const nav = await evalJs(`JSON.stringify({
     fillBefore: ${JSON.stringify(fillBefore || "0%")},
     fillAfter: document.getElementById('hud-fill').style.width,

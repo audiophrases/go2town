@@ -29,6 +29,17 @@ export const CONFIG = {
   rate: "-6%",
   pitch: "+8Hz", // a touch brighter — friendlier, more "bird guide"
 
+  // ---- Movement (hold ↑/W or the 🚶 button to drive; ←/→ or A/D to steer) -
+  move: {
+    hopBaseMs: 480, // time to cross a ~refMeters hop while holding (lower = faster)
+    refMeters: 40, // typical distance between panos
+    hopMinMs: 260, // never hop faster than this (short links)
+    hopMaxMs: 850, // never slower than this (long links)
+    fadeMs: 300, // crossfade between panos — the "motion" feel
+    turnDegPerSec: 80, // keyboard steer speed
+    forwardConeDeg: 80, // a pano counts as "ahead" within this cone of your view
+  },
+
   // ---- Learning / gameplay ----------------------------------------------
   arrivalRadiusMeters: 45, // how close counts as "you made it"
   // Distance thresholds (m) at which Coco gives an encouraging nudge.

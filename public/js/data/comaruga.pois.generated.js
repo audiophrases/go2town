@@ -18,6 +18,22 @@ export const POIS = [
   "distM": 10
  },
  {
+  "name": "Supermercat Càmping Francàs",
+  "kind": "shop:convenience",
+  "lat": 41.1767836,
+  "lng": 1.5018766,
+  "nearestPano": "CAoSF0NJSE0wb2dLRUlDQWdJQzQ5NC1qX1FF",
+  "distM": 14
+ },
+ {
+  "name": "Cal Francàs",
+  "kind": "amenity:restaurant",
+  "lat": 41.1766749,
+  "lng": 1.5019584,
+  "nearestPano": "cu3G3KPT7ITrbtq-xyuKWQ",
+  "distM": 15
+ },
+ {
   "name": "El Nou Peñon",
   "kind": "amenity:restaurant",
   "lat": 41.1812253,
@@ -39,6 +55,14 @@ export const POIS = [
   "lat": 41.181124,
   "lng": 1.5265659,
   "nearestPano": "02xqw-38YFbpqSHuhBoE7Q",
+  "distM": 26
+ },
+ {
+  "name": "AccuaJet Coma-ruga",
+  "kind": "shop:boat",
+  "lat": 41.1782605,
+  "lng": 1.526061,
+  "nearestPano": "FAamZuYF94EFY6xf8eUIyA",
   "distM": 26
  },
  {
