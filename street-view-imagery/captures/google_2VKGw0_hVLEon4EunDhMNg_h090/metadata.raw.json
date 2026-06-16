@@ -1,5 +1,13 @@
 {
   "metadata_api": {
+    "gap": {
+      "from": "IMVrmeI2Q4Dp0SesoovCjQ",
+      "fromIndex": 33,
+      "gap_m": 86.73,
+      "probe_t": 0.2222222222222222,
+      "to": "nEqXeWquDfnotgucDfsm3w",
+      "toIndex": 34
+    },
     "metadata": {
       "copyright": "© Google",
       "date": "2025-04",
@@ -11,8 +19,8 @@
       "status": "OK"
     },
     "query_location": {
-      "lat": 41.177074595759976,
-      "lon": 1.5075932012614284
+      "lat": 41.176978918993825,
+      "lon": 1.5075147866457435
     }
   },
   "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",

@@ -1,8 +1,16 @@
 {
-  "queried_at": "2026-06-15T13:24:00Z",
+  "densify_gap": {
+    "from": "ISWLKq0jhr8jEZqQlb3t3w",
+    "fromIndex": 70,
+    "gap_m": 38.2,
+    "probe_t": 0.5,
+    "to": "CAoSFkNJSE0wb2dLRUlDQWdJRGtwSXJqT2c.",
+    "toIndex": 71
+  },
+  "queried_at": "2026-06-16T07:45:41Z",
   "query": {
-    "location": "41.1786437,1.5160018",
-    "radius": 35,
+    "location": "41.1787057,1.5159380",
+    "radius": 25,
     "source": "outdoor"
   },
   "response": {

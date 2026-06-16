@@ -14,7 +14,10 @@
     <div id="start-gate" class="overlay">
       <div class="start-card">
         <div class="coco-big">🐦</div>
-        <div class="town-badge">Coma-ruga</div>
+        <div class="start-title" aria-label="Go2Town Coma-ruga edition">
+          <div class="game-title">Go2Town</div>
+          <div class="edition-title">Coma-ruga edition</div>
+        </div>
         <button id="start-btn" class="big-btn">▶</button>
         <div class="start-hint">🔊 sound on</div>
       </div>
@@ -40,10 +43,6 @@
     <!-- Persistent narrator avatar (Coco) -->
     <div id="coco" class="coco-avatar floating hidden" title="Coco">🐦</div>
 
-    <!-- Always-visible "walk forward" button (360 worlds). Moving never depends
-         on finding a 3D ground marker. -->
-    <button id="walk-btn" class="walk-btn hidden" title="walk" aria-label="walk forward">🚶</button>
-
     <!-- Mission HUD: icons only, no written English. -->
     <div id="hud" class="hud">
       <div class="hud-target"><span id="hud-icon">🚉</span></div>
@@ -52,6 +51,22 @@
       <button id="replay-btn" class="replay-btn" title="listen again">🔊</button>
     </div>
 
+    <!-- OpenStreetMap corner map: OSM's own labels, not generated game POIs. -->
+    <aside id="osm-map" class="osm-map" aria-label="OpenStreetMap">
+      <div class="osm-map-bar">
+        <button id="osm-toggle" class="osm-map-btn" title="hide OpenStreetMap">–</button>
+        <button id="osm-expand" class="osm-map-btn" title="expand map">⛶</button>
+        <a id="osm-open" class="osm-map-btn osm-map-link" href="https://www.openstreetmap.org/" target="_blank" rel="noopener" title="open OpenStreetMap">↗</a>
+      </div>
+      <div class="osm-map-frame-wrap">
+        <iframe id="osm-frame" class="osm-frame" title="OpenStreetMap player position" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <button id="osm-drop-layer" class="osm-drop-layer" type="button" aria-label="drop pin on nearest playable panorama"></button>
+        <div id="osm-player-marker" class="osm-player-marker" aria-hidden="true">▲</div>
+      </div>
+      <div id="osm-drop-status" class="osm-drop-status" aria-live="polite">tap map: jump to pano</div>
+      <div class="osm-credit">© OpenStreetMap</div>
+    </aside>
+
     <!-- Dev caption (only shown when CONFIG.debug is true) -->
     <div id="caption" class="caption"></div>
 
@@ -59,6 +74,33 @@
     <div id="dev-panel" class="dev-panel hidden">
       <button id="dev-arrive">⏭️ force arrive</button>
     </div>
+
+    <!-- Hidden admin bookmarking session. Type q23r- as the player name. -->
+    <section id="admin-panel" class="admin-panel hidden" aria-label="admin bookmarks">
+      <div class="admin-head">
+        <strong>Admin bookmarks</strong>
+        <span id="admin-status">walk to a spot</span>
+      </div>
+      <div class="admin-form">
+        <input id="admin-label" type="text" maxlength="48" placeholder="spot label" aria-label="spot label" />
+        <input id="admin-icon" type="text" maxlength="4" value="📍" aria-label="icon" />
+        <select id="admin-subgame" aria-label="future room type">
+          <option value="future-room">portal / future 2D room</option>
+          <option value="iceCream">ice cream room</option>
+          <option value="bakery">bakery room</option>
+          <option value="none">mission only</option>
+        </select>
+        <textarea id="admin-notes" rows="2" maxlength="240" placeholder="notes for implementation"></textarea>
+        <button id="admin-add" type="button">＋ add portal / bookmark here</button>
+      </div>
+      <div id="admin-list" class="admin-list"></div>
+      <div class="admin-actions">
+        <button id="admin-copy" type="button">copy JSON</button>
+        <button id="admin-download" type="button">download JSON</button>
+        <button id="admin-clear" type="button">clear</button>
+      </div>
+      <textarea id="admin-export" class="admin-export" rows="7" readonly aria-label="bookmark export"></textarea>
+    </section>
 
     <script type="module" src="js/game.js"></script>
   </body>

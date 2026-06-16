@@ -1,7 +1,7 @@
 {
-  "queried_at": "2026-06-15T13:24:10Z",
+  "queried_at": "2026-06-15T14:09:12Z",
   "query": {
-    "location": "41.1784867,1.5243706",
+    "location": "41.1787390,1.5244740",
     "radius": 35,
     "source": "outdoor"
   },

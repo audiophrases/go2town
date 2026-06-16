@@ -5,9 +5,9 @@
 //   ▶ start  → unlock audio
 //   Coco greets and asks the learner's name
 //   learner types their name (the only text they ever type)
-//   Coco welcomes them, then a tour of real Coma-ruga shops: ice-cream shop,
-//   bakery, supermarket, pharmacy — walking 360° Street View to each, with
-//   Coco's spoken nudges and an arrival celebration (+ subgame hook).
+//   Coco welcomes them, then a tour of vetted route checkpoints with icon-only
+//   HUD targets, OpenStreetMap context, spoken nudges, and arrival celebrations
+//   (+ subgame hook).
 // ---------------------------------------------------------------------------
 
 import { CONFIG } from "./config.js";
@@ -17,6 +17,8 @@ import { speaker } from "./core/tts.js";
 import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
 import { missions } from "./core/missions.js";
+import { mountOsmMap } from "./core/osmMap.js";
+import { isAdminName, mountAdmin } from "./core/admin.js";
 import { hasSubgame, launchSubgame } from "./core/subgames.js";
 
 // ---- DOM ------------------------------------------------------------------
@@ -28,13 +30,32 @@ const dom = {
   nameForm: el("name-form"),
   nameInput: el("name-input"),
   coco: el("coco"),
-  walkBtn: el("walk-btn"),
   caption: el("caption"),
   hud: el("hud"),
   hudIcon: el("hud-icon"),
   hudArrow: el("hud-arrow"),
   hudFill: el("hud-fill"),
   replayBtn: el("replay-btn"),
+  osmMap: el("osm-map"),
+  osmFrame: el("osm-frame"),
+  osmPlayerMarker: el("osm-player-marker"),
+  osmDropLayer: el("osm-drop-layer"),
+  osmDropStatus: el("osm-drop-status"),
+  osmToggle: el("osm-toggle"),
+  osmExpand: el("osm-expand"),
+  osmOpen: el("osm-open"),
+  adminPanel: el("admin-panel"),
+  adminStatus: el("admin-status"),
+  adminList: el("admin-list"),
+  adminExport: el("admin-export"),
+  adminLabel: el("admin-label"),
+  adminIcon: el("admin-icon"),
+  adminSubgame: el("admin-subgame"),
+  adminNotes: el("admin-notes"),
+  adminAdd: el("admin-add"),
+  adminCopy: el("admin-copy"),
+  adminDownload: el("admin-download"),
+  adminClear: el("admin-clear"),
   devPanel: el("dev-panel"),
   devArrive: el("dev-arrive"),
   world: el("world"),
@@ -49,6 +70,30 @@ missions.mountHud({
   iconEl: dom.hudIcon,
   arrowEl: dom.hudArrow,
   fillEl: dom.hudFill,
+});
+const osmMap = mountOsmMap({
+  shell: dom.osmMap,
+  frame: dom.osmFrame,
+  marker: dom.osmPlayerMarker,
+  dropLayer: dom.osmDropLayer,
+  status: dom.osmDropStatus,
+  toggleBtn: dom.osmToggle,
+  expandBtn: dom.osmExpand,
+  openLink: dom.osmOpen,
+});
+const admin = mountAdmin({
+  panel: dom.adminPanel,
+  status: dom.adminStatus,
+  list: dom.adminList,
+  exportBox: dom.adminExport,
+  labelInput: dom.adminLabel,
+  iconInput: dom.adminIcon,
+  subgameSelect: dom.adminSubgame,
+  notesInput: dom.adminNotes,
+  addBtn: dom.adminAdd,
+  copyBtn: dom.adminCopy,
+  downloadBtn: dom.adminDownload,
+  clearBtn: dom.adminClear,
 });
 
 if (CONFIG.debug) {
@@ -65,25 +110,8 @@ dom.startBtn.addEventListener("click", async () => {
   await speaker.unlock();
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
+  osmMap.attach(world);
   dom.coco.classList.remove("hidden");
-
-  // Hold-to-drive walk button for touch/mouse (keyboard ↑/W works too).
-  if (typeof world.startWalk === "function") {
-    dom.walkBtn.classList.remove("hidden");
-    const start = (e) => {
-      e.preventDefault();
-      dom.walkBtn.classList.add("pressed");
-      world.startWalk();
-    };
-    const stop = () => {
-      dom.walkBtn.classList.remove("pressed");
-      world.stopWalk();
-    };
-    dom.walkBtn.addEventListener("pointerdown", start);
-    dom.walkBtn.addEventListener("pointerup", stop);
-    dom.walkBtn.addEventListener("pointerleave", stop);
-    dom.walkBtn.addEventListener("pointercancel", stop);
-  }
 
   runIntro();
 });
@@ -103,6 +131,12 @@ function askName() {
 dom.nameForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = dom.nameInput.value.trim() || "friend";
+  if (isAdminName(name)) {
+    dom.nameModal.classList.add("hidden");
+    localStorage.removeItem("go2town.name");
+    admin.start(world);
+    return;
+  }
   learnerName = name;
   localStorage.setItem("go2town.name", name);
   dom.nameModal.classList.add("hidden");
@@ -122,11 +156,11 @@ function buildNudges() {
   }));
 }
 
-// ---- The tour: walk to each real shop in turn ------------------------------
+// ---- The tour: walk to each route checkpoint in turn ------------------------
 async function runMissions(name) {
   for (const m of MISSIONS) {
-    // Point the world's "forward" guidance (walk button + auto-facing) at this
-    // mission's target, then announce it.
+    // Give the world the mission target for HUD / arrival state, then announce it.
+    // Route movement itself stays on the deterministic capture chain.
     if (typeof world.setGoal === "function") world.setGoal(m.target);
     await coco.say(m.mission(name));
 
@@ -137,13 +171,13 @@ async function runMissions(name) {
       nudges: buildNudges(),
       onArrive: async () => {
         await coco.say(m.arrival(name));
-        // Future: a 2D "room" for this shop. Stub returns immediately for now.
+        // Future: a 2D "room" for this stop. Stub returns immediately for now.
         if (m.subgame && hasSubgame(m.subgame)) {
           await launchSubgame(m.subgame, { name, mission: m });
         }
       },
     });
-    console.info(`[game] ${name} reached "${m.id}" (${m.poi.name}).`);
+    console.info(`[game] ${name} reached "${m.id}".`);
   }
   await coco.say(SCRIPT.allDone(name));
 }

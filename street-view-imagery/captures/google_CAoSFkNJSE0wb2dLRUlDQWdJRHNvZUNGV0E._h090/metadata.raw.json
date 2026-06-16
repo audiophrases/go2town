@@ -1,0 +1,36 @@
+{
+  "metadata_api": {
+    "gap": {
+      "from": "6UVPpUfKnDPv35wfX-Z1fw",
+      "fromIndex": 107,
+      "gap_m": 80.22,
+      "probe_t": 0.1111111111111111,
+      "to": "rJs9msSiSLjjC8RfOfq3JQ",
+      "toIndex": 108
+    },
+    "metadata": {
+      "copyright": "© Alejandro Perez Vendopor",
+      "date": "2020-03",
+      "location": {
+        "lat": 41.17923290955341,
+        "lng": 1.524606768154393
+      },
+      "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJRHNvZUNGV0E.",
+      "status": "OK"
+    },
+    "query_location": {
+      "lat": 41.17929020757173,
+      "lon": 1.5246431207456619
+    }
+  },
+  "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",
+  "provider": "google-street-view",
+  "static_api_request": {
+    "fov": 90.0,
+    "heading": 90.0,
+    "pano": "CAoSFkNJSE0wb2dLRUlDQWdJRHNvZUNGV0E.",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  }
+}

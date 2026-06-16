@@ -1,0 +1,26 @@
+{
+  "densify_gap": {
+    "from": "i88cIq4TH3FyAC8ZcjgPsw",
+    "fromIndex": 113,
+    "gap_m": 98.07,
+    "probe_t": 0.4,
+    "to": "KgmZNoIb7NvPeKO-A-Mf1Q",
+    "toIndex": 114
+  },
+  "queried_at": "2026-06-16T07:45:45Z",
+  "query": {
+    "location": "41.1805635,1.5253659",
+    "radius": 25,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Alejandro Perez Vendopor",
+    "date": "2020-03",
+    "location": {
+      "lat": 41.18078481659604,
+      "lng": 1.525343815281638
+    },
+    "pano_id": "CAoSF0NJSE0wb2dLRUlDQWdJRHNtWXJ3cGdF",
+    "status": "OK"
+  }
+}

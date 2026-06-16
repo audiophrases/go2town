@@ -1,0 +1,36 @@
+{
+  "metadata_api": {
+    "gap": {
+      "from": "ZxzCmiB9ZwEBsjRw0AXJwQ",
+      "fromIndex": 133,
+      "gap_m": 25.55,
+      "probe_t": 0.3333333333333333,
+      "to": "4g1MRqXWJRB0yx1Pm0W7WQ",
+      "toIndex": 134
+    },
+    "metadata": {
+      "copyright": "© Google",
+      "date": "2022-07",
+      "location": {
+        "lat": 41.18248961923744,
+        "lng": 1.530537564064115
+      },
+      "pano_id": "QcH7jmJKWYhhxr0G-3unqQ",
+      "status": "OK"
+    },
+    "query_location": {
+      "lat": 41.18248354049821,
+      "lon": 1.530533180063494
+    }
+  },
+  "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",
+  "provider": "google-street-view",
+  "static_api_request": {
+    "fov": 90.0,
+    "heading": 180.0,
+    "pano": "QcH7jmJKWYhhxr0G-3unqQ",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  }
+}

@@ -1,84 +1,74 @@
 // ---------------------------------------------------------------------------
-// Phase One missions — a little tour of real Coma-ruga businesses.
+// Phase One missions — a short, continuous walk through Coma-ruga.
 //
-// Each mission points at a REAL shop/service from OpenStreetMap
-// (comaruga.pois.generated.js). We aim at the pano *nearest* the business (the
-// spot on the street outside it) so it's always reachable on foot, and Coco
-// announces it in short, repetitive, concrete English — the key noun repeated,
-// meaning carried by the place you're walking to. `subgame` is the future 2D
-// "room" for that shop (stub for now).
+// Mission targets are route checkpoints from the vetted playable Street View
+// chain, not generated shop/POI records. Place labels should come from the
+// OpenStreetMap corner map, where OSM's own map data can be inspected directly.
 // ---------------------------------------------------------------------------
 
-import { POIS } from "./comaruga.pois.generated.js";
 import { GENERATED } from "./comaruga.scenes.generated.js";
 
-// Find a real POI by a substring of its name (case-insensitive).
-function findPoi(nameIncludes) {
-  const q = nameIncludes.toLowerCase();
-  return POIS.find((p) => p.name.toLowerCase().includes(q));
+function targetAtRouteIndex(routeIndex) {
+  const sceneId = GENERATED.playableRoute[routeIndex];
+  const pano = sceneId ? GENERATED.scenes[sceneId] : null;
+  if (!pano || !pano.playable) return null;
+  return { lat: pano.lat, lng: pano.lon, sceneId };
 }
 
-// Target the pano nearest the business so arrival is guaranteed reachable.
-function targetOf(poi) {
-  const pano = GENERATED.scenes[poi.nearestPano];
-  return pano ? { lat: pano.lat, lng: pano.lon } : { lat: poi.lat, lng: poi.lng };
-}
-
-// Ordered tour. `match` is looked up in the live POI data, so the missions keep
-// working if the imagery (and coordinates) are regenerated.
+// Ordered eastbound checkpoints. The spoken copy is intentionally generic: it
+// teaches useful words/icons without claiming a named POI exists at the target.
 const DEFS = [
   {
-    id: "iceCream",
+    id: "iceCreamWalk",
     icon: "🍦",
-    match: "Jijonenca",
+    routeIndex: 20,
     subgame: "iceCream",
     mission: () =>
-      "Now, your first mission! Mmm, I want an ice cream. Let's get an ice cream! " +
-      "Find the ice cream shop. The ice cream shop! Follow my arrow. Let's go!",
+      "Now, your first mission! Mmm, ice cream! Let's walk this way for ice cream. " +
+      "Follow my arrow. Let's go!",
     arrival: (name) =>
-      `Yes! You found it! The ice cream shop! One ice cream, please. ` +
+      `Yes! You made it to my ice cream stop. Ice cream, please! ` +
       `Mmm, so cold and sweet! Wonderful, ${name}!`,
   },
   {
-    id: "bakery",
-    icon: "🥖",
-    match: "Forn de pa",
-    subgame: "bakery",
+    id: "pizzaWalk",
+    icon: "🍕",
+    routeIndex: 42,
+    subgame: null,
     mission: () =>
-      "Next mission! I am hungry. Let's buy some bread. Find the bakery! " +
-      "The bakery makes warm bread. Follow my arrow!",
+      "Next mission! I smell pizza. Let's walk this way for pizza. " +
+      "Hot pizza, round pizza. Follow my arrow!",
     arrival: (name) =>
-      `The bakery! Can you smell the fresh bread? Mmm! One loaf, please. ` +
+      `Pizza stop! Hot pizza, please. Mmm, delicious! ` +
       `Great walking, ${name}!`,
   },
   {
-    id: "supermarket",
-    icon: "🛒",
-    match: "Condis",
-    subgame: null,
+    id: "pastryWalk",
+    icon: "🥐",
+    routeIndex: 70,
+    subgame: "bakery",
     mission: () =>
-      "Let's go shopping! Find the supermarket. The big supermarket! " +
-      "We need milk and apples. Follow my arrow!",
+      "Now let's walk for a pastry. A sweet pastry! " +
+      "Maybe a croissant. Follow my arrow!",
     arrival: (name) =>
-      `The supermarket! So many things to buy. Milk, apples, bread! ` +
+      `Pastry stop! A croissant, please. Crispy and sweet! ` +
       `Excellent, ${name}!`,
   },
   {
-    id: "pharmacy",
-    icon: "💊",
-    match: "Tobella",
-    subgame: null,
+    id: "breadWalk",
+    icon: "🥖",
+    routeIndex: 84,
+    subgame: "bakery",
     mission: () =>
-      "Oh no, I have a little cough! Let's find the pharmacy. " +
-      "The pharmacy, with the green cross! Follow my arrow.",
+      "One more food stop! Let's walk for bread. Warm bread. " +
+      "Bread, bread, bread. Follow my arrow!",
     arrival: (name) =>
-      `The pharmacy! Some medicine, please. Thank you! I feel better. ` +
+      `Bread stop! Can you smell the fresh bread? Mmm! One loaf, please. ` +
       `You are a great helper, ${name}!`,
   },
 ];
 
-// Resolve each mission against the live POI data; drop any whose shop is missing.
 export const MISSIONS = DEFS.map((d) => {
-  const poi = findPoi(d.match);
-  return poi ? { ...d, poi, target: targetOf(poi) } : null;
+  const target = targetAtRouteIndex(d.routeIndex);
+  return target ? { ...d, target } : null;
 }).filter(Boolean);

@@ -11,10 +11,19 @@
 import { GENERATED } from "./comaruga.scenes.generated.js";
 
 // Map the generated graph into the scene shape the world provider expects:
-// lon → lng, and flag each as a Street View cubemap scene.
+// lon → lng, and keep `cube` true only when all four side-view images exist.
 const scenes = {};
 for (const [id, s] of Object.entries(GENERATED.scenes)) {
-  scenes[id] = { lat: s.lat, lng: s.lon, links: s.links, cube: true };
+  scenes[id] = {
+    lat: s.lat,
+    lng: s.lon,
+    routeIndex: s.routeIndex,
+    routeSegment: s.routeSegment,
+    segmentRouteIndex: s.segmentRouteIndex,
+    playable: !!s.playable,
+    links: s.links,
+    cube: !!s.cube,
+  };
 }
 const startNode = GENERATED.scenes[GENERATED.startScene];
 

@@ -11,8 +11,8 @@
       "status": "OK"
     },
     "query_location": {
-      "lat": 41.17848670588236,
-      "lon": 1.524370588235294
+      "lat": 41.178739,
+      "lon": 1.524474
     }
   },
   "note": "API key intentionally omitted; fixture created via official Google Street View APIs.",

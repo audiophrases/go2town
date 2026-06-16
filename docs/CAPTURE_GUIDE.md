@@ -1,61 +1,133 @@
-# Capturing the real Coma-ruga (360° photos)
+# Capturing and adding 360° places
 
-The game ships with auto-generated placeholder panoramas so it's playable today.
-To replace them with the **real town**, you capture one 360° photo per "scene"
-(waypoint) and drop the files in [`public/img/scenes/`](../public/img/scenes/).
-No API, no key, no cost — the photos are yours.
+The game can run from either:
+
+- the local Google Street View fixture in [`street-view-imagery/`](../street-view-imagery/) for prototype/classroom testing, or
+- your own 360° photos in [`public/img/scenes/`](../public/img/scenes/) for imagery you can fully own and redistribute.
+
+This guide is for adding owned photos and turning useful spots into missions or future 2D room entrances.
 
 ## 1. What to capture
 
-Phase One needs the seafront→station chain defined in
-[`public/js/data/comaruga.js`](../public/js/data/comaruga.js):
+A 360° scene is a standing spot. For a walkable route, capture spots often enough that learners can move naturally between them.
 
-| Scene | Spot | Suggested file |
-| --- | --- | --- |
-| `start` | The seafront promenade (start point) | `start.jpg` |
-| `wp1` … `wp4` | ~4 stops walking toward the station | `wp1.jpg` … `wp4.jpg` |
-| `station` | The train station entrance | `station.jpg` |
+Recommended spacing:
 
-You don't need continuous coverage — just these standing spots, ~150–250 m
-apart, so the walking hotspots connect them.
+- 10–30 m for dense Street-View-like walking
+- up to ~60 m only where the path is visually obvious
+- closer spacing near intersections, shop doors, and future mini-game entrances
+
+For each destination candidate, capture or identify:
+
+- exact lat/lng
+- a stable scene id or filename
+- the direction the camera/photo faces (`northOffset` if using equirectangular photos)
+- an implementation note: mission destination, future 2D room, or review-only point
 
 ## 2. How to shoot a 360° photo
 
-Any of these produce an **equirectangular** image (a 2:1 panorama):
+Any of these can produce an **equirectangular** 2:1 image:
 
-- **A 360° camera** (Ricoh Theta, Insta360, etc.) — easiest, one click.
-- **A phone panorama app** that exports equirectangular / "photo sphere"
-  (e.g. Google Street View app's photo-sphere mode, or apps like Panorama 360).
-- Hold the phone level, spin slowly in place, keep the horizon centred.
+- a 360° camera such as Ricoh Theta or Insta360
+- a phone photo-sphere/panorama app that exports equirectangular images
+- a careful phone panorama workflow, if it can export a 2:1 sphere
 
-Export as **JPG**, ideally ~4096×2048 or 8192×4096. Keep files under ~3 MB each
-so they load fast for students.
+Shooting tips:
 
-## 3. Add them to the game
+- Hold the camera level.
+- Keep the horizon centered.
+- Avoid standing too close to walls/doors unless that is the intended room entrance.
+- Record the approximate compass direction of the photo center.
+- Export JPG, ideally around 4096×2048 or 8192×4096.
+- Keep files small enough for classroom devices; under ~3 MB per scene is a good target.
 
-1. Save the files into [`public/img/scenes/`](../public/img/scenes/) using the
-   names above.
-2. In [`comaruga.js`](../public/js/data/comaruga.js), set each scene's `image`:
+## 3. Add owned photos to the game
 
-   ```js
-   start:   { lat: 41.18745, lng: 1.52405, icon: "🏖️", image: "start.jpg",   links: ["wp1"] },
-   ```
+1. Save photos into [`public/img/scenes/`](../public/img/scenes/).
+2. In scene data, set each scene's `image` field to the filename.
+3. Set `northOffset` if the center of the photo does not face the next route point.
+4. Link scenes with `links` if editing a hand-authored scene map.
+5. Refresh the game over HTTP, not `file://`.
 
-3. **Aim the HUD arrow** (optional but nice): set `northOffset` to the compass
-   bearing (0=N, 90=E, 180=S, 270=W) that the **centre** of the photo faces.
-   Use your phone compass while standing at the spot. If you omit it, the game
-   assumes the photo centre faces the next waypoint.
+Example scene shape:
 
-   ```js
-   wp2: { lat: ..., lng: ..., image: "wp2.jpg", northOffset: 235, links: ["wp1", "wp3"] },
-   ```
+```js
+start: {
+  lat: 41.18745,
+  lng: 1.52405,
+  icon: "🏖️",
+  image: "start.jpg",
+  northOffset: 235,
+  links: ["wp1"],
+}
+```
 
-That's it — refresh the game. The placeholders disappear and students walk the
-real Coma-ruga.
+`northOffset` is the compass bearing represented by yaw 0 / the center of the photo:
 
-## 4. Adding more places / missions
+- `0` = north
+- `90` = east
+- `180` = south
+- `270` = west
 
-Add new scenes to the `scenes` map and link them with `links`. To branch off to
-a shop for a future subgame, give that shop its own scene and point a `links`
-entry at it. The mission/arrival logic measures the `lat`/`lng` you set, so keep
-those accurate.
+If `northOffset` is omitted, `pano360` assumes the photo center faces the next waypoint.
+
+## 4. Use admin bookmarks for mission/room planning
+
+The easiest way to mark destinations while walking the route is the hidden admin session:
+
+1. Start the game.
+2. When Coco asks for a name, type `q23r-`.
+3. Walk to the exact spot.
+4. Enter a label, icon, room type, and notes.
+5. Click **+ bookmark current spot**.
+6. Copy or download the JSON export.
+
+The bookmark records `lat`, `lng`, `sceneId`, route metadata, camera view, notes, and a draft mission snippet. See [`ADMIN_BOOKMARKS.md`](ADMIN_BOOKMARKS.md).
+
+Use bookmarks to decide:
+
+- which spots become walking mission destinations
+- which spots should launch future 2D mini-game rooms
+- which places need better imagery or manual POI verification
+
+## 5. Adding more missions
+
+Current mission data is in:
+
+```text
+public/js/data/comaruga.missions.js
+```
+
+When adding a mission:
+
+- Prefer a bookmarked reachable pano over a generated POI guess.
+- Keep spoken text generic unless the exact place has been verified.
+- Preserve the icon/audio-first learner flow.
+- Set `subgame` only when the destination should launch a room.
+- Register implemented room ids in `public/js/core/subgames.js`.
+
+## 6. Regenerate and verify
+
+After changing the Google fixture graph or generated scenes:
+
+```bash
+python scripts/build_scenes.py --write --check
+python scripts/osm_lookup.py
+python scripts/validate_continuity.py
+```
+
+After changing game/admin behavior:
+
+```bash
+node --check public/js/game.js
+node --check public/js/core/admin.js
+node --check scripts/smoke.mjs
+```
+
+Run the browser smoke test before declaring a route or admin change done. It checks route rendering, movement, OSM panel behavior, learner flow, and admin bookmark export.
+
+## 7. Terms and redistribution
+
+Google Street View fixture images are governed by Google Maps Platform terms. Keep them for local testing unless the usage is legally cleared.
+
+Owned 360° photos are the long-term path for redistribution, public demos, and classroom packs that should not depend on Google fixture terms.

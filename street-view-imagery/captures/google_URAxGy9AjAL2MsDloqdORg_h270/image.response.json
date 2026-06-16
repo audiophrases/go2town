@@ -1,0 +1,31 @@
+{
+  "bytes": 104674,
+  "downloaded_at": "2026-06-15T14:10:27Z",
+  "final_url_without_key": "https://maps.googleapis.com/maps/api/streetview?size=640x640&pano=URAxGy9AjAL2MsDloqdORg&heading=270.0&pitch=0.0&fov=90.0&source=outdoor",
+  "http_headers": {
+    "Access-Control-Allow-Origin": "*",
+    "Alt-Svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
+    "Cache-Control": "public, max-age=86400",
+    "Connection": "close",
+    "Content-Length": "104674",
+    "Content-Security-Policy-Report-Only": "script-src 'none'; form-action 'none'; frame-src 'none'; report-uri https://csp.withgoogle.com/csp/scaffolding/msaispmnec:821:0",
+    "Content-Type": "image/jpeg",
+    "Cross-Origin-Opener-Policy-Report-Only": "same-origin; report-to=msaispmnec:821:0",
+    "Date": "Mon, 15 Jun 2026 14:10:53 GMT",
+    "Expires": "Tue, 16 Jun 2026 14:10:53 GMT",
+    "Report-To": "{\"group\":\"msaispmnec:821:0\",\"max_age\":2592000,\"endpoints\":[{\"url\":\"https://csp.withgoogle.com/csp/report-to/scaffolding/msaispmnec:821:0\"}],}",
+    "Server": "scaffolding on HTTPServer2",
+    "Server-Timing": "gfet4t7; dur=76",
+    "X-Frame-Options": "SAMEORIGIN",
+    "X-XSS-Protection": "0"
+  },
+  "request": {
+    "fov": 90.0,
+    "heading": 270.0,
+    "pano": "URAxGy9AjAL2MsDloqdORg",
+    "pitch": 0.0,
+    "size": "640x640",
+    "source": "outdoor"
+  },
+  "sha256": "f1d8cecb8dc9e5e63dbab474215c2dadea8835accba47ec740b1c9e10ffd0f75"
+}

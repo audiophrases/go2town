@@ -1,16 +1,15 @@
-# coma-ruga-google-street-view-dense-chain
+# coma-ruga-google-street-view-expanded-continuous-chain-targeted-densified
 
-Dense route-chain street-level test fixture for Coma-ruga seafront dense chain, El Vendrell, Tarragona, Catalonia, Spain.
+Target-densified street-level test fixture for Coma-ruga / El Vendrell.
 
 Provider: Google Street View Static API + Street View metadata API.
-Created: 2026-06-15T13:26:27Z
-Captures: 416
-Unique panos: 104
-Route sample step: 20.0 m
-Metadata search radius: 35 m
+Created: 2026-06-16T07:50:19Z
+Captures: 1032
+Unique panos: 258
+Target densification: adjacent route gaps above 25 m were probed in two passes (25 m radius / ~10 m step, then 45 m radius / ~8 m step).
+New panos added in latest pass: 25 (100 heading images).
+Metadata queries in latest pass: 60
 
 API keys are not stored in this folder. Raw provider metadata and request parameters without secrets are preserved beside every capture.
 
 Review Google Maps Platform terms before committing, redistributing, or using these images outside local testing.
-
-Quality note: one isolated pano was excluded from manifest.json because its nearest neighbor was >100 m, leaving the game-facing chain dense. The downloaded raw capture files were left in place.

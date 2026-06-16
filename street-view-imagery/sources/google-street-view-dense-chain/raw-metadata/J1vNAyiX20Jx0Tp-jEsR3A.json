@@ -1,0 +1,26 @@
+{
+  "densify_gap": {
+    "from": "PVeUD3HyDlxbMDFKq6y50Q",
+    "fromIndex": 127,
+    "gap_m": 32.58,
+    "probe_t": 0.5,
+    "to": "IO6hFPvvI9hCdxH6Ibi0dQ",
+    "toIndex": 128
+  },
+  "queried_at": "2026-06-16T07:45:49Z",
+  "query": {
+    "location": "41.1820761,1.5290426",
+    "radius": 25,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Google",
+    "date": "2025-04",
+    "location": {
+      "lat": 41.18216997473956,
+      "lng": 1.529024659910763
+    },
+    "pano_id": "J1vNAyiX20Jx0Tp-jEsR3A",
+    "status": "OK"
+  }
+}

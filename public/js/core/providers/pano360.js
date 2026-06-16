@@ -45,6 +45,10 @@ function ensurePannellum() {
 // Top & bottom weren't captured, so "null" lets Pannellum show the background.
 // (If left/right ever look mirrored, swap indices 1 and 3 here.)
 const CUBE_HEADINGS = ["h000", "h090", "h180", "h270"];
+const normHeading = (deg) => ((deg % 360) + 360) % 360;
+const signedAngleDelta = (from, to) => ((to - from + 540) % 360) - 180;
+const angleDistance = (a, b) => Math.abs(signedAngleDelta(a, b));
+
 function cubeFaces(panoId) {
   const base = `imagery/captures/google_${panoId}`;
   return [
@@ -118,38 +122,52 @@ export class Pano360World extends WorldBase {
     this.mode = "pano360";
     this.scenes = town.scenes;
     this._northOffsets = {};
-    // The current "goal" the walk button + auto-facing aim at. Missions update
-    // it via setGoal(); default to the configured station.
+    // The mission goal is only for HUD / arrival state. Movement follows the
+    // fixture route order, not a best-guess neighbour toward the goal; otherwise
+    // one key press can jump across town when the graph has nearby branches.
     this._goal = town.locations.trainStation;
-    const ids = Object.keys(this.scenes);
+    const ids = Object.keys(this.scenes).sort(
+      (a, b) => (this.scenes[a].routeIndex ?? 0) - (this.scenes[b].routeIndex ?? 0)
+    );
 
     const builtScenes = {};
     ids.forEach((id, idx) => {
       const sc = this.scenes[id];
-      const fwd = this._linkNearestTo(id, this._goal);
       // Cubemap scenes (Google Street View faces) are north-aligned: the front
       // face looks at compass heading 0, so yaw 0 == north (northOffset 0).
-      // Placeholder/equirect scenes default to facing the next waypoint.
+      // Placeholder/equirect scenes default to facing the next route point.
+      const next = this._routeNeighbor(id, 1);
       const northOffset = sc.cube
         ? sc.northOffset ?? 0
-        : sc.northOffset ?? (fwd ? bearing(sc, this.scenes[fwd]) : 0);
+        : sc.northOffset ?? (next ? bearing(sc, this.scenes[next]) : 0);
       this._northOffsets[id] = northOffset;
 
       const toYaw = (linkId) =>
         ((bearing(sc, this.scenes[linkId]) - northOffset + 540) % 360) - 180;
 
-      // All links are walkable footsteps; the HUD arrow, auto-facing, and walk
-      // button (all goal-aware) supply the direction, so no baked fwd/back.
-      const hotSpots = (sc.links || []).map((linkId) => ({
-        type: "scene",
-        sceneId: linkId,
-        yaw: toYaw(linkId),
-        pitch: -22, // sits on the ground like footsteps
-        cssClass: "go2-hs go2-hs-fwd",
-      }));
+      // Expose every safe nearby capture as the same neutral step marker. There
+      // is no baked left/right/forward meaning: keyboard movement and clicks are
+      // resolved by the real direction of the marker from the current view.
+      const routeHotspot = (option) => {
+        const linkId = option.sceneId;
+        const faceHeading = option.heading;
+        const targetYaw =
+          ((faceHeading - (this.scenes[linkId].northOffset ?? 0) + 540) % 360) - 180;
+        return {
+          type: "scene",
+          sceneId: linkId,
+          targetPitch: 0,
+          targetYaw,
+          targetHfov: 110,
+          yaw: toYaw(linkId),
+          pitch: -22, // sits low in the panorama, like a ground direction marker
+          cssClass: "go2-hs go2-hs-step",
+        };
+      };
+      const hotSpots = this._visibleRouteOptions(id).map(routeHotspot);
 
-      // Spawn each pano facing the goal so the way forward is dead-ahead.
-      const initialYaw = fwd ? toYaw(fwd) : 0;
+      // Spawn each pano facing the route, not the mission as-the-crow-flies.
+      const initialYaw = next ? toYaw(next) : 0;
       const common = { northOffset, hfov: 110, yaw: initialYaw, pitch: 0, hotSpots };
       if (sc.cube) {
         builtScenes[id] = { type: "cubemap", cubeMap: cubeFaces(id), ...common };
@@ -217,48 +235,191 @@ export class Pano360World extends WorldBase {
     this._emit();
   }
 
-  /** The neighbour of `id` closest to a goal {lat,lng}. */
-  _linkNearestTo(id, goal) {
-    if (!goal) return null;
-    let best = null;
-    let bestDist = Infinity;
-    for (const l of this.scenes[id]?.links || []) {
-      const d = nearnessTo(this.scenes[l], goal);
-      if (d < bestDist) {
-        bestDist = d;
-        best = l;
+  /** Previous / next pano in the same continuous segment, independent of look direction. */
+  _routeNeighbor(id, dir) {
+    const cur = this.scenes[id];
+    if (!cur || cur.routeSegment == null) return null;
+    const curIdx = cur.segmentRouteIndex ?? cur.routeIndex;
+    if (curIdx == null) return null;
+    const wantIdx = curIdx + dir;
+    for (const [otherId, other] of Object.entries(this.scenes)) {
+      if (otherId === id) continue;
+      if (other.routeSegment !== cur.routeSegment) continue;
+      if ((other.segmentRouteIndex ?? other.routeIndex) !== wantIdx) continue;
+      // The generated active route is marked playable. If the current scene is
+      // playable, never leave that vetted route; non-playable diagnostic segments
+      // can still navigate only within themselves if loaded manually.
+      if (cur.playable && !other.playable) continue;
+      return otherId;
+    }
+    return null;
+  }
+
+  /** Current compass heading from the actual camera view, not from route markers. */
+  _viewHeading() {
+    if (!this.viewer) return normHeading(this.heading || 0);
+    try {
+      return normHeading((this._currentNorthOffset || 0) + this.viewer.getYaw());
+    } catch {
+      return normHeading(this.heading || 0);
+    }
+  }
+
+  /** Safe reachable route panos from `id`, including crossroad-style branches. */
+  _safeRouteLinks(id) {
+    const cur = this.scenes[id];
+    if (!cur) return [];
+    const m = CONFIG.move || {};
+    const maxStepMeters = m.maxSafeStepMeters ?? 60;
+    const candidates = new Set(cur.links || []);
+    // Fallback / guarantee: include direct route neighbours even if a generated
+    // local-link list is missing or later tuned differently.
+    const prev = this._routeNeighbor(id, -1);
+    const next = this._routeNeighbor(id, 1);
+    if (prev) candidates.add(prev);
+    if (next) candidates.add(next);
+
+    return [...candidates].filter((sceneId) => {
+      const other = this.scenes[sceneId];
+      if (!other || sceneId === id) return false;
+      if (cur.routeSegment != null && other.routeSegment !== cur.routeSegment) return false;
+      if (cur.playable && !other.playable) return false;
+      const dist = haversine(cur, other);
+      return !Number.isFinite(dist) || dist <= maxStepMeters;
+    });
+  }
+
+  /** Adjacent safe panos with their real compass direction from the current pano. */
+  _routeOptions(id) {
+    const sc = this.scenes[id];
+    if (!sc) return [];
+    const curIdx = sc.segmentRouteIndex ?? sc.routeIndex ?? 0;
+    return this._safeRouteLinks(id)
+      .map((sceneId) => {
+        const other = this.scenes[sceneId];
+        const otherIdx = other.segmentRouteIndex ?? other.routeIndex ?? curIdx;
+        return {
+          sceneId,
+          routeDir: Math.sign(otherIdx - curIdx),
+          distance: haversine(sc, other),
+          heading: normHeading(bearing(sc, other)),
+        };
+      })
+      .sort((a, b) => a.distance - b.distance);
+  }
+
+  /** Keep one marker per visible branch so same-street skip links do not stack. */
+  _visibleRouteOptions(id) {
+    const branchAngleDeg = CONFIG.move?.branchMarkerAngleDeg ?? 12;
+    const visible = [];
+    for (const opt of this._routeOptions(id)) {
+      if (!visible.some((kept) => angleDistance(kept.heading, opt.heading) <= branchAngleDeg)) {
+        visible.push(opt);
       }
+    }
+    return visible;
+  }
+
+  /**
+   * Pick the adjacent pano matching player intent.
+   *
+   * Forward (W/↑) goes toward the direction the camera is facing. Back (S/↓)
+   * steps away from the view direction, like walking backwards in a first-person
+   * game. At a crossroad, the same rule naturally chooses the safe linked pano
+   * closest to the camera heading. The candidate set is continuity-gated first,
+   * so this cannot reintroduce long gap jumps.
+   */
+  _routeNeighborForView(id, moveDir) {
+    const options = this._routeOptions(id);
+    if (!options.length) return null;
+    const desiredHeading = normHeading(this._viewHeading() + (moveDir < 0 ? 180 : 0));
+    options.sort((a, b) => {
+      const angleA = angleDistance(a.heading, desiredHeading);
+      const angleB = angleDistance(b.heading, desiredHeading);
+      const byAngle = angleA - angleB;
+      // Several generated links can point almost the same way along the same
+      // street. Treat those as one branch and step to the nearest pano instead
+      // of skipping over it; real crossroads still win by clear angle.
+      if (Math.abs(byAngle) > 8) return byAngle;
+      const byDistance = a.distance - b.distance;
+      if (byDistance !== 0) return byDistance;
+      // Stable tie-break: keep old route-order behavior if all else ties.
+      return moveDir > 0 ? b.routeDir - a.routeDir : a.routeDir - b.routeDir;
+    });
+    return options[0].sceneId;
+  }
+
+  /** Compass heading to face when standing on `id` and continuing `dir`. */
+  _routeHeading(id, dir) {
+    const sc = this.scenes[id];
+    if (!sc) return null;
+    const next = this._routeNeighbor(id, dir);
+    if (next) return bearing(sc, this.scenes[next]);
+    const prev = this._routeNeighbor(id, -dir);
+    if (prev) return bearing(this.scenes[prev], sc);
+    return null;
+  }
+
+  /** New mission target: store for HUD / arrivals, but don't twist the route view. */
+  setGoal(goal) {
+    if (goal) this._goal = goal;
+    this._emit();
+  }
+
+  /** Find the nearest pano scene to a map drop / mission target. */
+  nearestScene(pos, { playableOnly = true } = {}) {
+    if (!pos || !this.scenes) return null;
+    const entries = Object.entries(this.scenes);
+    const playableEntries = entries.filter(([, sc]) => sc.playable);
+    const candidates = playableOnly && playableEntries.length ? playableEntries : entries;
+    let best = null;
+    for (const [sceneId, sc] of candidates) {
+      if (!Number.isFinite(sc.lat) || !Number.isFinite(sc.lng)) continue;
+      const distance = haversine(pos, sc);
+      if (!best || distance < best.distance) best = { sceneId, scene: sc, distance };
     }
     return best;
   }
 
-  /** Point the view (yaw) at the current goal in the current scene. */
-  _faceView() {
-    if (!this.viewer || !this._currentScene || !this._goal) return;
-    const sc = this.scenes[this._currentScene];
-    const yaw =
-      ((bearing(sc, this._goal) - (this._northOffsets[this._currentScene] || 0) + 540) % 360) - 180;
-    try {
-      this.viewer.setYaw(yaw, false);
-    } catch {
-      /* viewer mid-transition */
+  /** Jump directly to a scene id. Used by the interactive OSM drop-pin overlay. */
+  jumpToScene(sceneId, { faceHeading = null } = {}) {
+    const sc = this.scenes?.[sceneId];
+    if (!sc || !this.viewer) return null;
+    this._setMove?.(0);
+    if (sceneId === this._currentScene) {
+      this.position = { lat: sc.lat, lng: sc.lng };
+      this._emit();
+    } else {
+      this._hopTo(sceneId, { faceHeading });
     }
+    return {
+      sceneId,
+      lat: sc.lat,
+      lng: sc.lng,
+      heading: this._viewHeading(),
+      routeIndex: sc.routeIndex ?? null,
+      routeSegment: sc.routeSegment ?? null,
+      segmentRouteIndex: sc.segmentRouteIndex ?? null,
+      playable: sc.playable ?? null,
+    };
   }
 
-  /** New mission target: turn the view to face it once (orientation assist). */
-  setGoal(goal) {
-    if (goal) this._goal = goal;
-    this._faceView();
+  /** Snap an arbitrary lat/lng map click to the nearest playable pano. */
+  jumpToNearest(pos, { playableOnly = true, faceHeading = null } = {}) {
+    const best = this.nearestScene(pos, { playableOnly });
+    if (!best) return null;
+    const jumped = this.jumpToScene(best.sceneId, { faceHeading });
+    return jumped ? { ...jumped, distance: best.distance, requested: { lat: pos.lat, lng: pos.lng } } : null;
   }
 
-  // ---- Hold-to-drive movement -------------------------------------------
-  // Hold ↑/W (or the 🚶 button) to flow forward through panos in the direction
-  // you're looking; ←/→ or A/D steer; ↓/S reverses. Mouse-drag still looks
-  // around. Speed is distance-based (CONFIG.move) for a "driving" feel.
+  // ---- Route movement ----------------------------------------------------
+  // Hold ↑/W to step toward the direction the camera is facing; ↓/S steps back
+  // from that facing direction. ←/→ or A/D steer the camera, and mouse-drag
+  // still looks around. Hops are limited to vetted nearby captures in the same
+  // playable segment, then ranked by view heading.
 
   _initControls() {
     const m = CONFIG.move || {};
-    this._coneDeg = m.forwardConeDeg ?? 80;
     this._turnSpeed = m.turnDegPerSec ?? 80;
     this._move = 0; // -1 back, 0 stop, +1 forward
     this._turn = 0; // -1 left, +1 right
@@ -303,7 +464,7 @@ export class Pano360World extends WorldBase {
     this._turnRaf = requestAnimationFrame(turnLoop);
   }
 
-  /** Start/stop driving forward — used by the on-screen 🚶 button (hold). */
+  /** Start/stop route advance — kept for non-keyboard callers/tests. */
   startWalk() { this._setMove(1); }
   stopWalk() { this._setMove(0); }
 
@@ -321,57 +482,27 @@ export class Pano360World extends WorldBase {
       return;
     }
     const m = CONFIG.move || {};
-    const next = this._directionalLink(this._move === 1 ? 0 : 180);
-    let wait = 150; // nothing ahead — re-check soon (you may turn)
+    const next = this._routeNeighborForView(this._currentScene, this._move);
+    let wait = 150; // end of route — re-check soon in case direction changes
     if (next) {
       const dist = haversine(this.scenes[this._currentScene], this.scenes[next]) || (m.refMeters ?? 40);
-      this._hopTo(next);
+      this._hopTo(next); // preserve the player's current look direction across the hop
       const base = (m.hopBaseMs ?? 480) * (dist / (m.refMeters ?? 40));
       wait = Math.min(m.hopMaxMs ?? 850, Math.max(m.hopMinMs ?? 260, base));
     }
     this._driveTimer = setTimeout(() => this._driveTick(), wait);
   }
 
-  /** The neighbouring pano nearest the direction `relDeg` from the current view. */
-  _directionalLink(relDeg) {
-    const cur = this.scenes[this._currentScene];
-    if (!cur || !this.viewer) return null;
-    let viewHeading;
-    try {
-      viewHeading = (this._currentNorthOffset + this.viewer.getYaw() + 360) % 360;
-    } catch {
-      return null;
-    }
-    const target = (viewHeading + relDeg) % 360;
-    let best = null;
-    let bestDiff = Infinity;
-    for (const l of cur.links || []) {
-      const diff = Math.abs(((bearing(cur, this.scenes[l]) - target + 540) % 360) - 180);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        best = l;
-      }
-    }
-    return bestDiff <= this._coneDeg ? best : null;
-  }
-
-  /** Load a neighbour while preserving the current look direction (smooth drive). */
-  _hopTo(next) {
+  /** Load a route neighbour, optionally facing a compass heading after the hop. */
+  _hopTo(next, { faceHeading = null } = {}) {
     if (!this.viewer) return;
     try {
-      const viewHeading = (this._currentNorthOffset + this.viewer.getYaw() + 360) % 360;
+      const viewHeading =
+        faceHeading == null ? (this._currentNorthOffset + this.viewer.getYaw() + 360) % 360 : faceHeading;
       const newYaw = ((viewHeading - (this._northOffsets[next] || 0) + 540) % 360) - 180;
       this.viewer.loadScene(next, this.viewer.getPitch(), newYaw, this.viewer.getHfov());
     } catch {
       /* mid-transition; the next tick retries */
     }
   }
-}
-
-// Cheap "which neighbour is closer to the goal" comparison (no need for exact
-// metres here — only the ordering matters).
-function nearnessTo(a, b) {
-  const dLat = a.lat - b.lat;
-  const dLng = (a.lng - b.lng) * Math.cos((a.lat * Math.PI) / 180);
-  return dLat * dLat + dLng * dLng;
 }

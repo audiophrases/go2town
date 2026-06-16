@@ -29,15 +29,23 @@ export const CONFIG = {
   rate: "-6%",
   pitch: "+8Hz", // a touch brighter — friendlier, more "bird guide"
 
-  // ---- Movement (hold ↑/W or the 🚶 button to drive; ←/→ or A/D to steer) -
+  // ---- Movement (↑/W moves where you look; ↓/S steps back; ←/→ or A/D steer) -----
   move: {
-    hopBaseMs: 480, // time to cross a ~refMeters hop while holding (lower = faster)
-    refMeters: 40, // typical distance between panos
+    hopBaseMs: 420, // time to cross a ~refMeters hop while holding (lower = faster)
+    refMeters: 20, // typical distance between panos in the densified route
     hopMinMs: 260, // never hop faster than this (short links)
-    hopMaxMs: 850, // never slower than this (long links)
-    fadeMs: 300, // crossfade between panos — the "motion" feel
+    hopMaxMs: 720, // never slower than this (long links)
+    fadeMs: 240, // crossfade between panos — the "motion" feel
     turnDegPerSec: 80, // keyboard steer speed
-    forwardConeDeg: 80, // a pano counts as "ahead" within this cone of your view
+  },
+
+  // ---- OpenStreetMap corner map -----------------------------------------
+  // Uses OSM's own embedded map labels instead of project-generated POI pins.
+  osmMap: {
+    collapsed: false,
+    expanded: false,
+    updateMinMeters: 12, // avoid reloading the iframe for tiny yaw-only changes
+    updateMinMs: 1000,
   },
 
   // ---- Learning / gameplay ----------------------------------------------

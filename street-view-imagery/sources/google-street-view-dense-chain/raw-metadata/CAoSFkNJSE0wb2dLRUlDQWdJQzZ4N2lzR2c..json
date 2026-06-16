@@ -1,0 +1,26 @@
+{
+  "densify_gap": {
+    "from": "i88cIq4TH3FyAC8ZcjgPsw",
+    "fromIndex": 113,
+    "gap_m": 98.07,
+    "probe_t": 0.3,
+    "to": "KgmZNoIb7NvPeKO-A-Mf1Q",
+    "toIndex": 114
+  },
+  "queried_at": "2026-06-16T07:45:45Z",
+  "query": {
+    "location": "41.1804943,1.5252933",
+    "radius": 25,
+    "source": "outdoor"
+  },
+  "response": {
+    "copyright": "© Expacia XR",
+    "date": "2021-09",
+    "location": {
+      "lat": 41.18043318658756,
+      "lng": 1.525034543562383
+    },
+    "pano_id": "CAoSFkNJSE0wb2dLRUlDQWdJQzZ4N2lzR2c.",
+    "status": "OK"
+  }
+}

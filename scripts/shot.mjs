@@ -66,6 +66,8 @@ async function main() {
   // Geometry + computed style of every hotspot (is it visible & on-screen?)
   const geo = await evalJs(`JSON.stringify({
     viewport: [innerWidth, innerHeight],
+    osm: (()=>{ const m=document.getElementById('osm-map'); const f=document.getElementById('osm-frame');
+      const r=m.getBoundingClientRect(); return {x:Math.round(r.x), y:Math.round(r.y), w:Math.round(r.width), h:Math.round(r.height), src:f.src, collapsed:m.classList.contains('collapsed')}; })(),
     hotspots: [...document.querySelectorAll('.go2-hs')].map(h => {
       const r = h.getBoundingClientRect(); const cs = getComputedStyle(h);
       return { cls: h.className, x: Math.round(r.x), y: Math.round(r.y),
@@ -76,6 +78,15 @@ async function main() {
   })`);
   console.log("GEO:", geo);
 
+  await evalJs(`document.getElementById('osm-expand').click(); true`, true);
+  await sleep(500);
+  await shot("01-map-expanded");
+  await evalJs(`document.getElementById('osm-toggle').click(); true`, true);
+  await sleep(300);
+  await shot("01-map-collapsed");
+  await evalJs(`(()=>{ document.getElementById('osm-toggle').click(); document.getElementById('osm-expand').click(); return true; })()`, true);
+  await sleep(300);
+
   // Submit name → mission HUD
   await pollUntil(`!document.getElementById('name-modal').classList.contains('hidden')`, 18000);
   await shot("02-name");
@@ -85,23 +96,47 @@ async function main() {
   await sleep(800);
   await shot("03-mission");
 
-  // Is the forward hotspot now on-screen, and is the walk button visible?
+  // Are the neutral step hotspots now on-screen, and is the removed walk button absent?
   const geo2 = await evalJs(`JSON.stringify({
-    walkBtnVisible: !document.getElementById('walk-btn').classList.contains('hidden'),
-    fwd: [...document.querySelectorAll('.go2-hs-fwd')].map(h=>{
+    walkButtonRemoved: !document.getElementById('walk-btn'),
+    step: [...document.querySelectorAll('.go2-hs-step')].map(h=>{
       const r=h.getBoundingClientRect(); const cs=getComputedStyle(h);
       return {x:Math.round(r.x),y:Math.round(r.y),onScreen:(r.x>=0&&r.x<innerWidth&&r.y>=0&&r.y<innerHeight),vis:cs.visibility};
     }),
+    legacyArrowHotspots: document.querySelectorAll('.go2-hs-next,.go2-hs-prev,.go2-hs-fwd,.go2-hs-back').length,
+    osmMapVisible: !!document.getElementById('osm-frame').src,
   })`);
   console.log("GEO2:", geo2);
 
-  // Click the walk button and confirm we moved (progress advances).
+  // Hold ↑ and confirm route progress advances.
   const fillBefore = await evalJs(`document.getElementById('hud-fill').style.width`);
-  await evalJs(`document.getElementById('walk-btn').click(); true`, true);
+  await evalJs(`(()=>{ if(document.activeElement) document.activeElement.blur();
+    window.dispatchEvent(new KeyboardEvent('keydown',{code:'ArrowUp'})); return true })()`, true);
   await sleep(3000);
+  await evalJs(`window.dispatchEvent(new KeyboardEvent('keyup',{code:'ArrowUp'})); true`);
+  await sleep(500);
   const fillAfter = await evalJs(`document.getElementById('hud-fill').style.width`);
-  console.log("walk button: fill", fillBefore, "->", fillAfter);
+  console.log("route advance: fill", fillBefore, "->", fillAfter);
   await shot("04-walked");
+
+  // Admin session screenshot: q23r- opens the bookmark panel and captures a spot.
+  await send(ws, "Page.navigate", { url: BASE });
+  await sleep(3000);
+  await evalJs(`localStorage.removeItem('go2town.admin.bookmarks.v1'); true`);
+  await evalJs(`document.getElementById('start-btn').click(); true`, true);
+  await pollUntil(`!document.getElementById('name-modal').classList.contains('hidden')`, 18000);
+  await evalJs(`(()=>{
+    const i=document.getElementById('name-input'); i.value='q23r-';
+    document.getElementById('name-form').requestSubmit();
+    document.getElementById('admin-label').value='photo-worthy mission stop';
+    document.getElementById('admin-icon').value='📸';
+    document.getElementById('admin-subgame').value='future-room';
+    document.getElementById('admin-notes').value='candidate destination + future room';
+    document.getElementById('admin-add').click();
+    return true;
+  })()`, true);
+  await sleep(500);
+  await shot("05-admin-bookmark");
 
   ws.close();
   process.exit(0);

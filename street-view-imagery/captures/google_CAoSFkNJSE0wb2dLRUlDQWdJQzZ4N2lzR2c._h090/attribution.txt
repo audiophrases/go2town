@@ -1,0 +1,5 @@
+Provider: Google Street View Static API
+Pano ID: CAoSFkNJSE0wb2dLRUlDQWdJQzZ4N2lzR2c.
+Attribution: © Expacia XR
+License/terms: Google Maps Platform Terms of Service / Street View Static API terms
+Source: https://maps.googleapis.com/maps/api/streetview
