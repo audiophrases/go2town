@@ -62,12 +62,32 @@ html, body {
 }
 
 .coco-big { font-size: 84px; animation: bob 2.2s ease-in-out infinite; }
-.town-badge {
-  font-weight: 800;
-  letter-spacing: 1px;
+.start-title {
+  position: relative;
+  width: min(330px, 72vw);
+  min-height: 78px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.game-title,
+.edition-title {
+  grid-area: 1 / 1;
+  font-weight: 950;
+  letter-spacing: 0.5px;
+  line-height: 0.95;
+  text-shadow: 0 4px 0 rgba(11, 58, 74, 0.08);
+}
+.game-title {
+  color: var(--coral);
+  font-size: clamp(42px, 12vw, 72px);
+  animation: titleSwapGo 4.8s ease-in-out infinite;
+}
+.edition-title {
   color: var(--sea-deep);
-  font-size: 20px;
+  font-size: clamp(28px, 7vw, 46px);
   text-transform: uppercase;
+  animation: titleSwapEdition 4.8s ease-in-out infinite;
 }
 .start-hint { color: #888; font-size: 14px; }
 
