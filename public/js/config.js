@@ -37,6 +37,7 @@ export const CONFIG = {
     hopMaxMs: 720, // never slower than this (long links)
     fadeMs: 240, // crossfade between panos — the "motion" feel
     turnDegPerSec: 80, // keyboard steer speed
+    portalVisibleMeters: 32, // show nearby admin-placed AR gates on adjacent panos
   },
 
   // ---- OpenStreetMap corner map -----------------------------------------

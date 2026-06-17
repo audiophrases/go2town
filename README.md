@@ -120,8 +120,9 @@ Use admin mode when scouting destinations for future missions or 2D mini-game en
 1. Start the game.
 2. When Coco asks for the learner name, type **`q23r-`**.
 3. The learner HUD is hidden and the **Admin bookmarks** panel appears.
-4. Walk to a spot, enter a label/icon/subgame type/notes, then click **+ bookmark current spot**.
-5. Use **copy JSON** or **download JSON**.
+4. Walk to a spot, enter a label/icon/subgame type/notes, then click **+ add portal / bookmark here**.
+5. If `subgame` is not `none`, the saved spot immediately appears in the panorama as an AR-style portal/gate overlay; use `none` for mission-only bookmarks.
+6. Use **copy JSON** or **download JSON**.
 
 Bookmarks persist in browser localStorage:
 
@@ -133,6 +134,7 @@ Each exported bookmark records:
 
 - stable generated id and human label
 - icon and `subgame` (`future-room`, `iceCream`, `bakery`, or `none`)
+- `kind` (`portal` for visible AR gates, `bookmark` for mission-only spots)
 - notes for implementation
 - lat/lng and current `sceneId`
 - route index/segment metadata
@@ -202,6 +204,7 @@ The smoke test currently verifies:
 - admin sentinel `q23r-` opens the hidden admin panel
 - admin mode hides learner HUD
 - bookmark creation writes finite lat/lng + scene id + subgame metadata
+- non-`none` admin bookmarks render as panorama portal/gate overlays
 - admin export and localStorage persistence work
 
 `shot.mjs` saves browser screenshots under `scripts/`, including `05-admin-bookmark.png` for the admin panel.

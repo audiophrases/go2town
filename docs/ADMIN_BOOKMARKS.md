@@ -37,7 +37,7 @@ For each bookmark, fill in:
 - **future room type** — `future-room`, `iceCream`, `bakery`, or `none`
 - **notes** — short implementation note, such as what the player should do there
 
-Then click **+ bookmark current spot**.
+Then click **+ add portal / bookmark here**. If the selected future room type is not `none`, the saved spot appears immediately in the panorama as an AR-style portal/gate overlay for players/admins to see. Use `none` for mission-only bookmarks without a visible gate.
 
 ## Persistence
 
@@ -65,6 +65,7 @@ The panel's export textarea contains JSON like:
       "label": "ice cream corner",
       "icon": "🍦",
       "subgame": "iceCream",
+      "kind": "portal",
       "notes": "candidate destination + future ordering room",
       "createdAt": "2026-06-15T00:00:00.000Z",
       "lat": 41.180979,
@@ -93,6 +94,7 @@ Fields to preserve when implementing a mission:
 - `lat` / `lng` — used by the mission arrival engine
 - `icon` — learner HUD icon
 - `subgame` — optional room id to launch on arrival
+- `kind` — `portal` for visible gates, `bookmark` for mission-only spots
 - `notes` — human intent for the future implementation
 
 Fields that are useful but may become stale after route regeneration:
@@ -153,7 +155,7 @@ node --check scripts/smoke.mjs
 Browser smoke setup:
 
 ```bash
-python -m http.server 8082 --bind 127.0.0.1 --directory public
+python server.py --port 8082 --host 127.0.0.1
 "/c/Program Files/Google/Chrome/Application/chrome.exe" \
   --headless=new --disable-gpu --no-first-run --no-default-browser-check \
   --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 \
@@ -171,6 +173,7 @@ The smoke test should continue to assert:
 - exported bookmark has a finite `lat` / `lng`
 - exported bookmark has a `sceneId`
 - exported bookmark preserves the selected future subgame metadata
+- non-`none` bookmarks render as `.go2-portal` panorama overlays with a label
 
 `node scripts/shot.mjs http://127.0.0.1:8082/ 9222` captures `scripts/05-admin-bookmark.png`, which is useful for visual review of the panel.
 

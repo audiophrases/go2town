@@ -26,6 +26,18 @@ function readBookmarks() {
   }
 }
 
+function isPortalBookmark(bookmark) {
+  return bookmark && bookmark.subgame !== "none";
+}
+
+export function readAdminBookmarks() {
+  return readBookmarks();
+}
+
+export function readAdminPortals() {
+  return readBookmarks().filter(isPortalBookmark);
+}
+
 function writeBookmarks(bookmarks) {
   localStorage.setItem(STORE_KEY, JSON.stringify(bookmarks, null, 2));
 }
@@ -144,7 +156,7 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
           <div class="admin-bookmark-main">
             <strong>${b.icon || "📍"} ${b.label || b.id}</strong>
             <span>${b.sceneId || "no-scene"} · ${b.lat}, ${b.lng}</span>
-            <em>${b.subgame === "none" ? "mission only" : `subgame: ${b.subgame || "future-room"}`}</em>
+            <em>${b.subgame === "none" ? "mission only" : `AR portal: ${b.subgame || "future-room"}`}</em>
           </div>
           <button class="admin-mini-btn" data-remove="${index}" title="remove bookmark">×</button>
         `;
@@ -166,6 +178,9 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
       missionDraft: missionCode(bookmarks),
     };
     if (exportBox) exportBox.value = JSON.stringify(payload, null, 2);
+    if (typeof worldRef?.setPortals === "function") {
+      worldRef.setPortals(bookmarks.filter(isPortalBookmark));
+    }
   }
 
   function addBookmark() {
@@ -181,6 +196,7 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
       label,
       icon: iconInput?.value?.trim() || "📍",
       subgame: subgameSelect?.value || "future-room",
+      kind: (subgameSelect?.value || "future-room") === "none" ? "bookmark" : "portal",
       notes: notesInput?.value?.trim() || "",
       createdAt: new Date().toISOString(),
       ...snap,
@@ -189,7 +205,7 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
     if (labelInput) labelInput.value = "";
     if (notesInput) notesInput.value = "";
     render();
-    setStatus(`bookmarked ${bookmark.label}`);
+    setStatus(`${isPortalBookmark(bookmark) ? "portal placed" : "bookmarked"}: ${bookmark.label}`);
   }
 
   addBtn?.addEventListener("click", addBookmark);

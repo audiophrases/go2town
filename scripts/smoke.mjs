@@ -83,6 +83,8 @@ async function main() {
 
   const preStart = await evalJs(`JSON.stringify({
     startBtn: !!document.getElementById('start-btn'),
+    gameTitle: document.querySelector('.game-title')?.textContent.trim() || '',
+    editionTitle: document.querySelector('.edition-title')?.textContent.trim() || '',
     gameModuleTag: document.querySelectorAll('script[type=module]').length,
     devPanelHidden: document.getElementById('dev-panel').classList.contains('hidden'),
     readyState: document.readyState,
@@ -269,6 +271,9 @@ async function main() {
       firstHasScene: !!first.sceneId,
       firstHasLatLng: Number.isFinite(first.lat) && Number.isFinite(first.lng),
       firstSubgame: first.subgame,
+      firstKind: first.kind,
+      portalHotspots: document.querySelectorAll('.go2-portal').length,
+      portalLabel: document.querySelector('.go2-portal-label')?.textContent || '',
       storedCount: JSON.parse(localStorage.getItem('go2town.admin.bookmarks.v1') || '[]').length,
     });
   })()`, true);
@@ -289,12 +294,15 @@ async function main() {
   console.log("warnings  :", warnings.filter((w) => !/favicon/.test(w)).slice(0, 8));
 
   ws.close();
+  const p = JSON.parse(preStart);
   const a = JSON.parse(afterStart);
   const osm = JSON.parse(osmUi);
   const b = JSON.parse(afterName);
   // Hard pass: the 360 world renders with no errors. HUD is reported too.
   const ok =
     realErrors.length === 0 &&
+    p.gameTitle === "Go2Town" &&
+    p.editionTitle === "Coma-ruga edition" &&
     a.startGateHidden &&
     a.pannellum &&
     a.worldCanvas &&
@@ -323,7 +331,10 @@ async function main() {
     adminObj.hasMissionDraft &&
     adminObj.firstHasScene &&
     adminObj.firstHasLatLng &&
-    adminObj.firstSubgame === "iceCream";
+    adminObj.firstSubgame === "iceCream" &&
+    adminObj.firstKind === "portal" &&
+    adminObj.portalHotspots >= 1 &&
+    adminObj.portalLabel === "test ice cream corner";
   console.log("HUD active:", b.hudActive);
   console.log(ok ? "SMOKE: PASS ✅" : "SMOKE: FAIL ❌");
   process.exit(ok ? 0 : 1);

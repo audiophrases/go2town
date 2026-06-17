@@ -18,7 +18,7 @@ import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
 import { missions } from "./core/missions.js";
 import { mountOsmMap } from "./core/osmMap.js";
-import { isAdminName, mountAdmin } from "./core/admin.js";
+import { isAdminName, mountAdmin, readAdminPortals } from "./core/admin.js";
 import { hasSubgame, launchSubgame } from "./core/subgames.js";
 
 // ---- DOM ------------------------------------------------------------------
@@ -110,8 +110,15 @@ dom.startBtn.addEventListener("click", async () => {
   await speaker.unlock();
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
+  if (typeof world.setPortals === "function") world.setPortals(readAdminPortals());
   osmMap.attach(world);
   dom.coco.classList.remove("hidden");
+
+  window.addEventListener("go2town:portal", (event) => {
+    const portal = event.detail || {};
+    console.info("[portal] selected", portal);
+    coco.say(`This gate will open the ${portal.label || "room"} soon!`, { remember: false });
+  });
 
   runIntro();
 });

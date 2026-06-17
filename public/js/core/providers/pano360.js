@@ -48,6 +48,17 @@ const CUBE_HEADINGS = ["h000", "h090", "h180", "h270"];
 const normHeading = (deg) => ((deg % 360) + 360) % 360;
 const signedAngleDelta = (from, to) => ((to - from + 540) % 360) - 180;
 const angleDistance = (a, b) => Math.abs(signedAngleDelta(a, b));
+const portalHotspotId = (portal) =>
+  `go2-portal-${String(portal.id || portal.label || "portal").replace(/[^a-z0-9_-]/gi, "-")}`;
+
+function decoratePortalHotspot(div, portal) {
+  div.dataset.icon = portal.icon || "🚪";
+  div.title = portal.label || "portal";
+  const label = document.createElement("div");
+  label.className = "go2-portal-label";
+  label.textContent = portal.label || "portal";
+  div.appendChild(label);
+}
 
 function cubeFaces(panoId) {
   const base = `imagery/captures/google_${panoId}`;
@@ -122,6 +133,8 @@ export class Pano360World extends WorldBase {
     this.mode = "pano360";
     this.scenes = town.scenes;
     this._northOffsets = {};
+    this._portals = [];
+    this._portalHotspots = [];
     // The mission goal is only for HUD / arrival state. Movement follows the
     // fixture route order, not a best-guess neighbour toward the goal; otherwise
     // one key press can jump across town when the graph has nearby branches.
@@ -230,6 +243,7 @@ export class Pano360World extends WorldBase {
     this._currentScene = id;
     this.position = { lat: sc.lat, lng: sc.lng };
     this._currentNorthOffset = this._northOffsets[id] ?? 0;
+    this._refreshPortalHotspots();
     // Heading is kept from the view (driving preserves it); the rAF loop syncs
     // it from the actual yaw on the next frame.
     this._emit();
@@ -360,7 +374,59 @@ export class Pano360World extends WorldBase {
     return null;
   }
 
-  /** New mission target: store for HUD / arrivals, but don't twist the route view. */
+  /** Admin-placed room entrances rendered as AR-style panorama gates. */
+  setPortals(portals = []) {
+    this._portals = Array.isArray(portals) ? portals.filter((p) => p && p.subgame !== "none") : [];
+    this._refreshPortalHotspots();
+  }
+
+  _portalToHotspot(portal) {
+    const sc = this.scenes?.[this._currentScene];
+    if (!sc) return null;
+    const portalSceneId = portal.sceneId || null;
+    let yaw = Number.isFinite(portal.view?.yaw) ? portal.view.yaw : null;
+    let pitch = Number.isFinite(portal.view?.pitch) ? portal.view.pitch : -6;
+    if (portalSceneId !== this._currentScene) {
+      if (!Number.isFinite(portal.lat) || !Number.isFinite(portal.lng)) return null;
+      const dist = haversine(sc, { lat: portal.lat, lng: portal.lng });
+      if (!Number.isFinite(dist) || dist > (CONFIG.move?.portalVisibleMeters ?? 32)) return null;
+      yaw = ((bearing(sc, { lat: portal.lat, lng: portal.lng }) - (this._currentNorthOffset || 0) + 540) % 360) - 180;
+      pitch = -8;
+    }
+    if (!Number.isFinite(yaw)) return null;
+    return {
+      id: portalHotspotId(portal),
+      type: "info",
+      yaw,
+      pitch,
+      cssClass: "go2-portal",
+      createTooltipFunc: decoratePortalHotspot,
+      createTooltipArgs: portal,
+      clickHandlerFunc: () => {
+        window.dispatchEvent(new CustomEvent("go2town:portal", { detail: portal }));
+      },
+    };
+  }
+
+  _refreshPortalHotspots() {
+    if (!this.viewer || !this._currentScene) return;
+    for (const { id, sceneId } of this._portalHotspots || []) {
+      try { this.viewer.removeHotSpot(id, sceneId); } catch { /* already gone */ }
+    }
+    this._portalHotspots = [];
+    for (const portal of this._portals || []) {
+      const hotSpot = this._portalToHotspot(portal);
+      if (!hotSpot) continue;
+      try {
+        this.viewer.addHotSpot(hotSpot, this._currentScene);
+        this._portalHotspots.push({ id: hotSpot.id, sceneId: this._currentScene });
+      } catch {
+        /* Pannellum may reject while a scene is mid-transition; next scenechange retries. */
+      }
+    }
+  }
+
+  /** New mission target: store for HUD / arrival state, but don't twist the route view. */
   setGoal(goal) {
     if (goal) this._goal = goal;
     this._emit();

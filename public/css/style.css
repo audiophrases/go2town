@@ -425,6 +425,69 @@ body:has(#dev-panel:not(.hidden)) .osm-map {
   50% { filter: drop-shadow(0 0 15px rgba(28, 167, 196, 0.8)); }
 }
 
+/* ---- AR-style subgame portals placed by admin mode ----------------------- */
+.pnlm-hotspot-base.go2-portal {
+  width: 108px;
+  height: 152px;
+  margin: -128px 0 0 -54px;
+  border-radius: 54px 54px 18px 18px;
+  border: 3px solid rgba(255, 253, 247, 0.95);
+  background:
+    radial-gradient(ellipse at 50% 36%, rgba(255, 255, 255, 0.92) 0 16%, rgba(255, 210, 74, 0.42) 17% 24%, transparent 25%),
+    linear-gradient(160deg, rgba(255, 122, 89, 0.78), rgba(28, 167, 196, 0.78));
+  box-shadow:
+    0 24px 46px rgba(4, 24, 34, 0.48),
+    0 0 0 10px rgba(255, 210, 74, 0.15),
+    inset 0 0 28px rgba(255, 255, 255, 0.42);
+  cursor: pointer;
+  animation: portalGlow 2.2s ease-in-out infinite;
+}
+.pnlm-hotspot-base.go2-portal::before {
+  content: attr(data-icon);
+  position: absolute;
+  inset: 24px 0 auto 0;
+  text-align: center;
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.26));
+}
+.pnlm-hotspot-base.go2-portal::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  width: 116px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 210, 74, 0.32);
+  filter: blur(9px);
+  transform: translateX(-50%);
+  z-index: -1;
+}
+.go2-portal-label {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  max-width: 150px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(11, 58, 74, 0.84);
+  color: #fff;
+  font: 800 12px/1.15 var(--font);
+  text-align: center;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pnlm-hotspot-base.go2-portal:hover {
+  box-shadow:
+    0 28px 54px rgba(4, 24, 34, 0.56),
+    0 0 0 15px rgba(255, 210, 74, 0.22),
+    0 0 30px rgba(28, 167, 196, 0.48),
+    inset 0 0 34px rgba(255, 255, 255, 0.5);
+}
+
 /* ---- Demo backdrop (no API key) ----------------------------------------- */
 .demo-world { overflow: hidden; }
 .demo-scene { position: absolute; inset: 0; }
@@ -606,6 +669,20 @@ body.admin-mode .coco-avatar.floating { opacity: 0.35; }
 /* ---- Animations --------------------------------------------------------- */
 @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes titleSwapGo {
+  0%, 38% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  48%, 88% { opacity: 0; transform: translateY(-12px) scale(0.94); filter: blur(5px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes titleSwapEdition {
+  0%, 42% { opacity: 0; transform: translateY(12px) scale(0.94); filter: blur(5px); }
+  52%, 88% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(12px) scale(0.94); filter: blur(5px); }
+}
+@keyframes portalGlow {
+  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 0 rgba(255, 210, 74, 0)); }
+  50% { transform: translateY(-5px) scale(1.03); filter: drop-shadow(0 0 18px rgba(255, 210, 74, 0.82)); }
+}
 @keyframes talk {
   0%, 100% { transform: translateY(0) rotate(-3deg); }
   50% { transform: translateY(-8px) rotate(3deg); }
