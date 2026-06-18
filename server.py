@@ -40,8 +40,16 @@ except ImportError:  # pragma: no cover - friendly message instead of a stack tr
 ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / "public"
 CACHE_DIR = ROOT / "cache" / "tts"
-# Street View fixtures live outside public/ and are served under /imagery/.
+# Street View fixtures live outside public/ and are served under /imagery/ for
+# legacy/local development only. The default runtime now uses live Google Street
+# View and does not need these images.
 IMAGERY_DIR = ROOT / "street-view-imagery"
+GOOGLE_MAPS_KEY_FILE = Path(
+    os.environ.get(
+        "GOOGLE_MAPS_KEY_FILE",
+        r"C:/Users/Admin/AppData/Local/hermes/secrets/google_maps_api_key.txt",
+    )
+)
 
 # Voices are validated against this list before being passed to edge-tts so the
 # query string can't be used to request arbitrary remote work.
@@ -81,6 +89,17 @@ def get_tts_mp3(text: str, voice: str, rate: str, pitch: str) -> bytes:
     return dest.read_bytes()
 
 
+def read_google_maps_api_key() -> str:
+    """Read the local Google Maps JS key without ever writing it into the repo."""
+    env_key = os.environ.get("GOOGLE_MAPS_API_KEY", "").strip()
+    if env_key:
+        return env_key
+    try:
+        return GOOGLE_MAPS_KEY_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 class GameHandler(SimpleHTTPRequestHandler):
     """Serves ./public and adds the /api/tts endpoint."""
 
@@ -96,10 +115,27 @@ class GameHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/tts":
             self._handle_tts(parse_qs(parsed.query))
             return
+        if parsed.path == "/api/maps-config":
+            self._handle_maps_config()
+            return
         if parsed.path.startswith("/imagery/"):
             self._handle_imagery(parsed.path)
             return
         super().do_GET()
+
+    def _handle_maps_config(self):
+        key = read_google_maps_api_key()
+        body = json.dumps({
+            "googleMapsApiKey": key,
+            "hasGoogleMapsApiKey": bool(key),
+            "source": "env" if os.environ.get("GOOGLE_MAPS_API_KEY", "").strip() else "key-file",
+        }).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
 
     def _handle_imagery(self, path: str):
         # Map /imagery/<rest> -> street-view-imagery/<rest>, guarding traversal.

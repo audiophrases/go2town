@@ -168,7 +168,7 @@ async function runMissions(name) {
   for (const m of MISSIONS) {
     // Give the world the mission target for HUD / arrival state, then announce it.
     // Route movement itself stays on the deterministic capture chain.
-    if (typeof world.setGoal === "function") world.setGoal(m.target);
+    if (typeof world.setGoal === "function") world.setGoal({ ...m.target, icon: m.icon, subgame: m.subgame });
     await coco.say(m.mission(name));
 
     await missions.run({

@@ -161,12 +161,13 @@ export function mountOsmMap({ shell, frame, marker, dropLayer, status, toggleBtn
     flashTimer = setTimeout(() => shell.classList.remove("osm-dropped"), 700);
   }
 
-  function dropAt(pos) {
+  async function dropAt(pos) {
     if (!worldRef || typeof worldRef.jumpToNearest !== "function") {
       setStatus("map drop needs pano world");
       return null;
     }
-    const jumped = worldRef.jumpToNearest(pos, { playableOnly: true });
+    setStatus("finding nearest pano…");
+    const jumped = await Promise.resolve(worldRef.jumpToNearest(pos, { playableOnly: true }));
     if (!jumped) {
       setStatus("no nearby pano found");
       return null;
@@ -191,7 +192,7 @@ export function mountOsmMap({ shell, frame, marker, dropLayer, status, toggleBtn
     dropLayer.style.setProperty("--tap-x", `${Math.max(0, Math.min(rect.width, x))}px`);
     dropLayer.style.setProperty("--tap-y", `${Math.max(0, Math.min(rect.height, y))}px`);
     const pos = pointToLatLng(x, y, rect, renderedBounds);
-    dropAt(pos);
+    void dropAt(pos);
   }
 
   toggleBtn.addEventListener("click", () => {

@@ -27,7 +27,7 @@ pip install -r requirements.txt
 python server.py            # serves http://localhost:8000
 ```
 
-The default `pano360` world runs from local fixtures, with no live API key needed at play time.
+The default `google` world runs on **live Google Maps Street View**. `server.py` reads the Maps JavaScript API key from `GOOGLE_MAPS_API_KEY` or the local key file outside the repo (`C:/Users/Admin/AppData/Local/hermes/secrets/google_maps_api_key.txt`) and serves it to the local browser at `/api/maps-config`. Do not paste or commit the key.
 
 ---
 
@@ -52,11 +52,29 @@ Hidden developer/admin flow:
 
 ---
 
-## The town: local 360° imagery
+## The town: live Google Street View AR
 
-The default world is rendered with [Pannellum](https://pannellum.org/), vendored locally. It walks an ordered route of 360° scenes. Each Google Street View fixture pano is represented as four 90° side captures (N/E/S/W) mapped onto a cubemap; top/bottom are left empty.
+The default world is now rendered by the official [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) Street View panorama. Go2Town sits on top of that panorama as an **augmented-reality overlay**:
 
-Current fixture summary:
+- Google Street View is the real Coma-ruga base layer.
+- Go2Town's mission HUD, progress arrow, Coco, OpenStreetMap panel, and admin portals are DOM overlays above the panorama.
+- The overlay stays synced from `position_changed`, `pov_changed`, `pano_changed`, and `links_changed` events.
+- `W` / `↑` chooses the Google Street View link closest to the camera heading; `S` / `↓` chooses the link behind the camera; `A/D` or `←/→` steer the live panorama.
+- The OSM drop-pin flow asks the Google Street View service for the nearest live panorama and jumps there.
+
+The API key is intentionally **not** stored in `public/js/config.js` or committed anywhere. At runtime:
+
+1. `server.py` reads `GOOGLE_MAPS_API_KEY`, or if unset, `C:/Users/Admin/AppData/Local/hermes/secrets/google_maps_api_key.txt`.
+2. The browser fetches `/api/maps-config` from the local server.
+3. `public/js/core/providers/google.js` loads the official Google Maps JS API and creates a `StreetViewPanorama`.
+
+If the key is missing or Google fails to load, the app falls back to the simple demo backdrop so the speech/name/mission loop still runs.
+
+### Legacy local 360° fixtures
+
+The old `pano360` provider remains available for offline/local-fixture development. It uses [Pannellum](https://pannellum.org/) and the existing `street-view-imagery/` fixture folder, but it is no longer the default runtime.
+
+Legacy fixture summary:
 
 - Dataset folder: [`street-view-imagery/`](street-view-imagery/)
 - Dataset: `coma-ruga-google-street-view-expanded-continuous-chain-targeted-densified`
@@ -64,12 +82,10 @@ Current fixture summary:
 - Unique panos: **258**
 - Generated scene file: [`public/js/data/comaruga.scenes.generated.js`](public/js/data/comaruga.scenes.generated.js)
 - Current playable route: **86** contiguous panos in playable segment `2`
-- Playable route max hop: **53.5 m**; most adjacent hops are now around **16–21 m**
+- Playable route max hop: **53.5 m**; most adjacent hops are around **16–21 m**
 - Continuity gate: validation fails if the playable segment has any hop over **60 m**
 
-The current fixture was target-densified around the largest route gaps using the official Google Street View metadata/static APIs. Broad scraping is intentionally avoided; new captures are only added where they make walking continuity smoother.
-
-Regenerate after imagery/graph changes:
+Regenerate legacy fixture-derived scene metadata only after imagery/graph changes:
 
 ```bash
 python scripts/build_scenes.py --write --check
@@ -77,9 +93,7 @@ python scripts/osm_lookup.py
 python scripts/validate_continuity.py
 ```
 
-> ⚠️ **Terms note:** Google Maps Platform terms restrict storing/redistributing Street View imagery. This fixture is for local classroom/prototype testing. Do not publicly redistribute the Google images. For owned imagery, capture your own 360° photos — see [`docs/CAPTURE_GUIDE.md`](docs/CAPTURE_GUIDE.md).
-
-Scenes with no cubemap or equirectangular photo fall back to generated placeholder panoramas, so the game remains playable while content is incomplete.
+> ⚠️ **Terms note:** Google Maps Platform terms restrict storing/redistributing Street View imagery. Prefer the live Google provider for gameplay. Do not publicly redistribute the local Google image fixtures.
 
 ### Other world providers
 
@@ -87,8 +101,8 @@ Set `worldProvider` in [`public/js/config.js`](public/js/config.js):
 
 | Value | Shows | Cost / notes |
 | --- | --- | --- |
-| `"pano360"` | Local 360° scene graph | Default; no key at runtime |
-| `"google"` | Live Google Street View | Requires Maps JS API key with billing |
+| `"google"` | Live Google Street View + synced Go2Town AR overlay | Default; key supplied by `server.py` from env/key-file |
+| `"pano360"` | Legacy local 360° scene graph | Offline fixture fallback; no key at runtime |
 | `"demo"` | Painted beach backdrop | Zero setup fallback |
 
 ---
@@ -97,14 +111,15 @@ Set `worldProvider` in [`public/js/config.js`](public/js/config.js):
 
 | Piece | File | Job |
 | --- | --- | --- |
-| TTS + static server | [`server.py`](server.py) | Serves the game and voices Coco's lines on demand via `edge-tts`, cached by text hash. |
+| Server | [`server.py`](server.py) | Serves the game, voices Coco via Edge TTS, serves legacy `/imagery/`, and exposes local `/api/maps-config` for the Google Maps JS key without committing it. |
 | Launcher | [`go2town.bat`](go2town.bat) | One-click install + run + open browser on Windows. |
 | Config | [`public/js/config.js`](public/js/config.js) | World provider, voice, speech rate, movement tuning, debug toggle. |
-| Town data | [`public/js/data/comaruga.js`](public/js/data/comaruga.js) | Town wrapper that imports generated scene data and mission-relevant locations. |
-| Generated scenes | [`public/js/data/comaruga.scenes.generated.js`](public/js/data/comaruga.scenes.generated.js) | Auto-generated pano graph; do not edit by hand. |
+| Town data | [`public/js/data/comaruga.js`](public/js/data/comaruga.js) | Coma-ruga start point, legacy scene metadata, and mission-relevant locations. |
+| Generated scenes | [`public/js/data/comaruga.scenes.generated.js`](public/js/data/comaruga.scenes.generated.js) | Legacy pano graph metadata; do not edit by hand. |
 | Missions | [`public/js/data/comaruga.missions.js`](public/js/data/comaruga.missions.js) + [`public/js/core/missions.js`](public/js/core/missions.js) | Data-driven mission definitions plus HUD/progress/arrival engine. |
-| World | [`public/js/core/world.js`](public/js/core/world.js) + [`public/js/core/providers/`](public/js/core/providers/) | Swappable 360 / Google / demo providers behind one interface. |
-| 360 provider | [`public/js/core/providers/pano360.js`](public/js/core/providers/pano360.js) | Pannellum cubemap scenes, hotspots, view-relative movement, route safety gates. |
+| World | [`public/js/core/world.js`](public/js/core/world.js) + [`public/js/core/providers/`](public/js/core/providers/) | Swappable Google / 360 / demo providers behind one interface. |
+| Google provider | [`public/js/core/providers/google.js`](public/js/core/providers/google.js) | Live `StreetViewPanorama`, view-relative Google-link walking, OSM drop-pin pano lookup, and AR mission/portal overlay. |
+| 360 provider | [`public/js/core/providers/pano360.js`](public/js/core/providers/pano360.js) | Legacy Pannellum cubemap scenes, hotspots, view-relative movement, route safety gates. |
 | OSM map | [`public/js/core/osmMap.js`](public/js/core/osmMap.js) | Collapsible OpenStreetMap panel centered on player position; click/tap overlay converts map drops to nearest playable pano jumps. |
 | Narrator | [`public/js/core/narrator.js`](public/js/core/narrator.js) | Coco identity, spoken lines, avatar/caption behavior. |
 | Admin bookmarks | [`public/js/core/admin.js`](public/js/core/admin.js) | Hidden `q23r-` admin mode for saving route spots as future mission/subgame destinations. |
@@ -190,12 +205,17 @@ Quick syntax checks:
 
 ```bash
 node --check public/js/game.js
+node --check public/js/core/providers/google.js
 node --check public/js/core/admin.js
+node --check public/js/core/osmMap.js
 node --check scripts/smoke.mjs
+node --check scripts/smoke_live_google.mjs
 node --check scripts/shot.mjs
+node scripts/validate_live_google.mjs
+python -m py_compile server.py
 ```
 
-The smoke test currently verifies:
+`scripts/validate_live_google.mjs` verifies the live-Google default and secret-handling invariants. The browser smoke test currently focuses on the legacy 360 route flow and verifies:
 
 - 360 world renders with Pannellum and hotspots
 - OSM panel loads, expands, collapses, links to `openstreetmap.org`, and click-drops onto the nearest playable pano

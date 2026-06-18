@@ -4,24 +4,33 @@ This file is a compact handoff for future go2town development. See the README fo
 
 ## Current architecture
 
-- The app is static browser code served by `server.py` or any local HTTP server.
+- The app is browser code served by `server.py` so TTS and the local Google Maps key endpoint are available.
 - Runtime entry point: `public/js/game.js`.
-- The default world provider is `pano360` in `public/js/core/providers/pano360.js`.
-- Pano graph data is generated into `public/js/data/comaruga.scenes.generated.js`; do not edit it by hand.
+- The default world provider is live `google` in `public/js/core/providers/google.js`.
+- `server.py` exposes `/api/maps-config`, reading `GOOGLE_MAPS_API_KEY` or the external local key file; never commit a Maps key.
+- The legacy `pano360` provider still exists for offline fixture work in `public/js/core/providers/pano360.js`.
+- Pano graph data is generated into `public/js/data/comaruga.scenes.generated.js`; do not edit it by hand. In live Google mode it is still useful as mission/checkpoint metadata, but not as imagery.
 - Mission definitions are in `public/js/data/comaruga.missions.js`.
 - Future room launch lives behind `public/js/core/subgames.js`.
-- The OpenStreetMap context panel lives in `public/js/core/osmMap.js`; its transparent click layer maps a tap to lat/lng and asks the world provider to jump to the nearest playable pano.
-- Hidden admin bookmarking lives in `public/js/core/admin.js`; non-`none` admin bookmarks are also pushed into `Pano360World.setPortals()` so they render as AR-style gates in the panorama.
+- The OpenStreetMap context panel lives in `public/js/core/osmMap.js`; its transparent click layer maps a tap to lat/lng and asks the world provider to jump to the nearest pano. With live Google mode this lookup is async through `StreetViewService`.
+- Hidden admin bookmarking lives in `public/js/core/admin.js`; non-`none` admin bookmarks are pushed into the active world's `setPortals()` so they render as AR-style gates.
 
 ## Route and movement rules
 
-The first-person route controls intentionally follow camera heading:
+The live Google provider and the legacy Pannellum provider both keep first-person controls aligned with camera heading:
 
-- `W` / `ArrowUp`: choose the safe adjacent pano closest to the current view heading.
-- `S` / `ArrowDown`: choose the safe adjacent pano closest to the opposite heading.
+- `W` / `ArrowUp`: choose the reachable pano/link closest to the current view heading.
+- `S` / `ArrowDown`: choose the reachable pano/link closest to the opposite heading.
 - `A/D` and left/right arrows turn the camera.
 
-Keep these invariants when editing `pano360.js`:
+Live Google mode rules:
+
+- Candidate moves come from `StreetViewPanorama.getLinks()`.
+- Do not reconstruct Google tile URLs or use stored fixture images for live gameplay.
+- Preserve the current POV across pano jumps unless the player explicitly turns or an admin/tool passes `faceHeading`.
+- Keep the Go2Town AR layer DOM-only and synced from Street View events (`position_changed`, `pov_changed`, `pano_changed`, `links_changed`).
+
+Legacy `pano360.js` invariants:
 
 - Candidate moves must be from vetted safe links first.
 - Do not jump across graph gaps to satisfy heading intent.
@@ -47,11 +56,12 @@ Movement timing in `public/js/config.js` is tuned for the densified route's ~20 
 
 Provider-side contract:
 
-- `Pano360World.nearestScene(pos, { playableOnly })` returns the closest scene, preferring `scene.playable` captures when available.
+- `GoogleWorld.jumpToNearest(pos, ...)` may return a Promise because it queries `StreetViewService`; `osmMap.js` awaits it and updates status when the live pano is found.
+- `Pano360World.nearestScene(pos, { playableOnly })` returns the closest legacy scene, preferring `scene.playable` captures when available.
 - `Pano360World.jumpToScene(sceneId, { faceHeading })` stops active driving and loads that pano without inventing a synthetic route edge.
-- `Pano360World.jumpToNearest(pos, ...)` is what the map overlay uses; the returned distance is only used for status text.
+- `Pano360World.jumpToNearest(pos, ...)` is synchronous and returns the legacy scene jump payload.
 
-Keep drops snapped to playable panos by default. Do not let an OSM click bypass the continuity-vetted playable segment unless a future admin-only workflow explicitly requests non-playable captures.
+Keep live Google drops on official `StreetViewService` results. Keep legacy drops snapped to playable panos by default. Do not let an OSM click bypass the continuity-vetted legacy playable segment unless a future admin-only workflow explicitly requests non-playable captures.
 
 ## Mission grounding
 
@@ -88,14 +98,19 @@ python scripts/osm_lookup.py
 python scripts/validate_continuity.py
 ```
 
-After changing JS behavior:
+After changing JS/server behavior:
 
 ```bash
 node --check public/js/game.js
 node --check public/js/core/admin.js
+node --check public/js/core/osmMap.js
+node --check public/js/core/providers/google.js
 node --check public/js/core/providers/pano360.js
 node --check scripts/smoke.mjs
+node --check scripts/smoke_live_google.mjs
 node --check scripts/shot.mjs
+node scripts/validate_live_google.mjs
+python -m py_compile server.py
 ```
 
 Browser smoke setup:
@@ -119,7 +134,17 @@ node scripts/shot.mjs http://127.0.0.1:8082/ 9222
 
 ## Smoke coverage to preserve
 
-`scripts/smoke.mjs` should keep checking:
+`scripts/validate_live_google.mjs` should keep checking:
+
+- default provider is `google`
+- no source file contains a committed Google API key literal
+- `server.py` exposes `/api/maps-config` and reads the key from env/key-file
+- the Google provider uses `StreetViewPanorama`, `StreetViewService`, runtime config fetch, view-relative movement, OSM drop-pin support, and AR mission/portal overlay classes
+- the Google provider does not depend on local image fixtures
+
+`scripts/smoke_live_google.mjs` drives Chrome against the default provider and checks that the browser loads Google Maps, reaches `world.mode === "google"`, receives finite Street View coordinates, and renders the AR mission target plus admin portal overlay without printing the key.
+
+`scripts/smoke.mjs` is still strongest for the legacy `pano360` route and should keep checking when that provider is under test:
 
 - start gate hides after trusted click
 - Pannellum world and route hotspots render

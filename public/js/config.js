@@ -1,12 +1,10 @@
 // ---------------------------------------------------------------------------
 // go2town configuration
 //
-// 1. Paste your Google Maps JavaScript API key below to enable real Street View.
-//    Get one at: https://console.cloud.google.com/google/maps-apis
-//    Enable "Maps JavaScript API". (Street View is included.)
-//
-//    No key yet? The game still runs in a "demo backdrop" mode so you can hear
-//    Coco and play through the mission loop — you just won't see the real town.
+// 1. The default runtime uses live Google Street View from the Google Maps
+//    JavaScript API. Keep the key outside the repo: server.py reads
+//    GOOGLE_MAPS_API_KEY or the local Hermes secret file, then exposes it only
+//    to the local browser at /api/maps-config.
 //
 // 2. Everything else has sensible defaults; tweak to taste.
 // ---------------------------------------------------------------------------
@@ -14,13 +12,15 @@
 export const CONFIG = {
   // ---- World provider ----------------------------------------------------
   // How the town is shown:
-  //   "pano360" (default) — your own 360° photos, free & offline (Pannellum)
-  //   "google"            — Google Street View (needs the billed key below)
-  //   "demo"              — painted beach backdrop, zero setup
-  worldProvider: "pano360",
+  //   "google" (default) — live Google Street View, with AR overlays synced on top
+  //   "pano360"          — legacy local 360° fixtures (Pannellum)
+  //   "demo"             — painted beach backdrop, zero setup
+  worldProvider: "google",
 
   // ---- Google Maps (only used when worldProvider === "google") -----------
-  googleMapsApiKey: "", // <-- PASTE YOUR KEY HERE
+  // Leave this empty. server.py supplies the runtime key from GOOGLE_MAPS_API_KEY
+  // or C:/Users/Admin/AppData/Local/hermes/secrets/google_maps_api_key.txt.
+  googleMapsApiKey: "",
 
   // ---- Narrator voice (Coco the seagull) ---------------------------------
   // Allowed voices are mirrored on the server. Ava & Emma are the most natural.
