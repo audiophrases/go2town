@@ -37,6 +37,13 @@ if errorlevel 1 (
   )
 )
 
+REM --- Stop any previously running go2town server ---------------------------
+REM  Free port 8000 so a fresh server can start (and we never run two at once).
+echo  Stopping any previous go2town server on port 8000...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr "LISTENING" ^| findstr ":8000"') do (
+  taskkill /F /PID %%P >nul 2>nul
+)
+
 REM --- Launch ---------------------------------------------------------------
 echo.
 echo   go2town is starting...  Coco is warming up her voice.
