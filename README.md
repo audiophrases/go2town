@@ -12,7 +12,7 @@ Current learner flow:
 > → learner walks the vetted 360° route using the arrow/progress HUD  
 > → Coco celebrates and starts the next mission
 
-Important grounding note: mission targets are currently **vetted route checkpoints**, not authoritative generated business POIs. The spoken mission copy is intentionally generic ("walk for ice cream", "walk for bread") and the corner OpenStreetMap panel gives real-world context using OSM's own labels.
+Important grounding note: mission targets are currently **vetted route checkpoints**, not authoritative generated business POIs. The spoken mission copy is intentionally generic ("walk for ice cream", "walk for bread").
 
 ---
 
@@ -42,8 +42,6 @@ Learner controls:
 - **A / D** or **← / →** turns the camera.
 - Mouse/touch drag looks around.
 - 🔊 or Coco repeats the current instruction.
-- The OpenStreetMap corner panel can collapse/expand and opens OSM in a new tab.
-- Tap/click the OpenStreetMap panel to drop a pin: the game snaps you to the nearest playable pano/hotspot on the vetted route.
 
 Hidden developer/admin flow:
 
@@ -57,10 +55,9 @@ Hidden developer/admin flow:
 The default world is now rendered by the official [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript) Street View panorama. Go2Town sits on top of that panorama as an **augmented-reality overlay**:
 
 - Google Street View is the real Coma-ruga base layer.
-- Go2Town's mission HUD, progress arrow, Coco, OpenStreetMap panel, and admin portals are DOM overlays above the panorama.
+- Go2Town's mission HUD, progress arrow, Coco, and admin portals are DOM overlays above the panorama.
 - The overlay stays synced from `position_changed`, `pov_changed`, `pano_changed`, and `links_changed` events.
 - `W` / `↑` chooses the Google Street View link closest to the camera heading; `S` / `↓` chooses the link behind the camera; `A/D` or `←/→` steer the live panorama.
-- The OSM drop-pin flow asks the Google Street View service for the nearest live panorama and jumps there.
 
 The API key is intentionally **not** stored in `public/js/config.js` or committed anywhere. At runtime:
 
@@ -118,9 +115,8 @@ Set `worldProvider` in [`public/js/config.js`](public/js/config.js):
 | Generated scenes | [`public/js/data/comaruga.scenes.generated.js`](public/js/data/comaruga.scenes.generated.js) | Legacy pano graph metadata; do not edit by hand. |
 | Missions | [`public/js/data/comaruga.missions.js`](public/js/data/comaruga.missions.js) + [`public/js/core/missions.js`](public/js/core/missions.js) | Data-driven mission definitions plus HUD/progress/arrival engine. |
 | World | [`public/js/core/world.js`](public/js/core/world.js) + [`public/js/core/providers/`](public/js/core/providers/) | Swappable Google / 360 / demo providers behind one interface. |
-| Google provider | [`public/js/core/providers/google.js`](public/js/core/providers/google.js) | Live `StreetViewPanorama`, view-relative Google-link walking, OSM drop-pin pano lookup, and AR mission/portal overlay. |
+| Google provider | [`public/js/core/providers/google.js`](public/js/core/providers/google.js) | Live `StreetViewPanorama`, view-relative Google-link walking, nearest-pano lookup, and AR mission/portal overlay. |
 | 360 provider | [`public/js/core/providers/pano360.js`](public/js/core/providers/pano360.js) | Legacy Pannellum cubemap scenes, hotspots, view-relative movement, route safety gates. |
-| OSM map | [`public/js/core/osmMap.js`](public/js/core/osmMap.js) | Collapsible OpenStreetMap panel centered on player position; click/tap overlay converts map drops to nearest playable pano jumps. |
 | Narrator | [`public/js/core/narrator.js`](public/js/core/narrator.js) | Coco identity, spoken lines, avatar/caption behavior. |
 | Admin bookmarks | [`public/js/core/admin.js`](public/js/core/admin.js) | Hidden `q23r-` admin mode for saving route spots as future mission/subgame destinations. |
 | Subgames | [`public/js/core/subgames.js`](public/js/core/subgames.js) | Registry + overlay launcher for future 2D rooms. |
@@ -207,7 +203,6 @@ Quick syntax checks:
 node --check public/js/game.js
 node --check public/js/core/providers/google.js
 node --check public/js/core/admin.js
-node --check public/js/core/osmMap.js
 node --check scripts/smoke.mjs
 node --check scripts/smoke_live_google.mjs
 node --check scripts/shot.mjs
@@ -218,7 +213,6 @@ python -m py_compile server.py
 `scripts/validate_live_google.mjs` verifies the live-Google default and secret-handling invariants. The browser smoke test currently focuses on the legacy 360 route flow and verifies:
 
 - 360 world renders with Pannellum and hotspots
-- OSM panel loads, expands, collapses, links to `openstreetmap.org`, and click-drops onto the nearest playable pano
 - learner name flow reaches an active mission HUD
 - movement is view-relative (`W` follows camera heading, `S` backs away)
 - admin sentinel `q23r-` opens the hidden admin panel
@@ -237,12 +231,12 @@ python -m py_compile server.py
 - **Repetition is free.** The 🔊 button and Coco replay the latest instruction.
 - **Comprehensible input.** Short concrete English, repeated keywords, visible context.
 - **Do, don't translate.** Learners show understanding by walking to destinations and interacting with future rooms.
-- **Grounded place claims.** Do not present generated POIs as fact. Use route checkpoints plus the OSM panel unless a place has been verified.
+- **Grounded place claims.** Do not present generated POIs as fact. Use route checkpoints unless a place has been verified.
 
 ---
 
 ## Roadmap
 
-- **Phase One ✅** — Coma-ruga intro, walking missions, local 360° route, OSM context panel, hidden admin bookmark workflow.
+- **Phase One ✅** — Coma-ruga intro, walking missions, local 360° route, hidden admin bookmark workflow.
 - **Phase Two** — 2D subgame rooms at selected bookmarked destinations: order ice cream, buy bread/pastry, etc.
 - **Later** — more towns, repeat-after-me speaking practice, richer admin tools, and a train-station mission once coverage is solid.

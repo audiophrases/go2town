@@ -6,7 +6,7 @@
 //   Coco greets and asks the learner's name
 //   learner types their name (the only text they ever type)
 //   Coco welcomes them, then a tour of vetted route checkpoints with icon-only
-//   HUD targets, OpenStreetMap context, spoken nudges, and arrival celebrations
+//   HUD targets, spoken nudges, and arrival celebrations
 //   (+ subgame hook).
 // ---------------------------------------------------------------------------
 
@@ -17,7 +17,6 @@ import { speaker } from "./core/tts.js";
 import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
 import { missions } from "./core/missions.js";
-import { mountOsmMap } from "./core/osmMap.js";
 import { isAdminName, mountAdmin, readAdminPortals } from "./core/admin.js";
 import { hasSubgame, launchSubgame } from "./core/subgames.js";
 
@@ -36,14 +35,6 @@ const dom = {
   hudArrow: el("hud-arrow"),
   hudFill: el("hud-fill"),
   replayBtn: el("replay-btn"),
-  osmMap: el("osm-map"),
-  osmFrame: el("osm-frame"),
-  osmPlayerMarker: el("osm-player-marker"),
-  osmDropLayer: el("osm-drop-layer"),
-  osmDropStatus: el("osm-drop-status"),
-  osmToggle: el("osm-toggle"),
-  osmExpand: el("osm-expand"),
-  osmOpen: el("osm-open"),
   adminPanel: el("admin-panel"),
   adminStatus: el("admin-status"),
   adminList: el("admin-list"),
@@ -70,16 +61,6 @@ missions.mountHud({
   iconEl: dom.hudIcon,
   arrowEl: dom.hudArrow,
   fillEl: dom.hudFill,
-});
-const osmMap = mountOsmMap({
-  shell: dom.osmMap,
-  frame: dom.osmFrame,
-  marker: dom.osmPlayerMarker,
-  dropLayer: dom.osmDropLayer,
-  status: dom.osmDropStatus,
-  toggleBtn: dom.osmToggle,
-  expandBtn: dom.osmExpand,
-  openLink: dom.osmOpen,
 });
 const admin = mountAdmin({
   panel: dom.adminPanel,
@@ -111,7 +92,6 @@ dom.startBtn.addEventListener("click", async () => {
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
   if (typeof world.setPortals === "function") world.setPortals(readAdminPortals());
-  osmMap.attach(world);
   dom.coco.classList.remove("hidden");
 
   window.addEventListener("go2town:portal", (event) => {

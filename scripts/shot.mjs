@@ -66,8 +66,6 @@ async function main() {
   // Geometry + computed style of every hotspot (is it visible & on-screen?)
   const geo = await evalJs(`JSON.stringify({
     viewport: [innerWidth, innerHeight],
-    osm: (()=>{ const m=document.getElementById('osm-map'); const f=document.getElementById('osm-frame');
-      const r=m.getBoundingClientRect(); return {x:Math.round(r.x), y:Math.round(r.y), w:Math.round(r.width), h:Math.round(r.height), src:f.src, collapsed:m.classList.contains('collapsed')}; })(),
     hotspots: [...document.querySelectorAll('.go2-hs')].map(h => {
       const r = h.getBoundingClientRect(); const cs = getComputedStyle(h);
       return { cls: h.className, x: Math.round(r.x), y: Math.round(r.y),
@@ -77,15 +75,6 @@ async function main() {
     })
   })`);
   console.log("GEO:", geo);
-
-  await evalJs(`document.getElementById('osm-expand').click(); true`, true);
-  await sleep(500);
-  await shot("01-map-expanded");
-  await evalJs(`document.getElementById('osm-toggle').click(); true`, true);
-  await sleep(300);
-  await shot("01-map-collapsed");
-  await evalJs(`(()=>{ document.getElementById('osm-toggle').click(); document.getElementById('osm-expand').click(); return true; })()`, true);
-  await sleep(300);
 
   // Submit name → mission HUD
   await pollUntil(`!document.getElementById('name-modal').classList.contains('hidden')`, 18000);
@@ -104,7 +93,6 @@ async function main() {
       return {x:Math.round(r.x),y:Math.round(r.y),onScreen:(r.x>=0&&r.x<innerWidth&&r.y>=0&&r.y<innerHeight),vis:cs.visibility};
     }),
     legacyArrowHotspots: document.querySelectorAll('.go2-hs-next,.go2-hs-prev,.go2-hs-fwd,.go2-hs-back').length,
-    osmMapVisible: !!document.getElementById('osm-frame').src,
   })`);
   console.log("GEO2:", geo2);
 

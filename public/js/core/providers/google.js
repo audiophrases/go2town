@@ -3,7 +3,7 @@
 //
 // This is the default Go2Town world now: the real Google Maps Street View
 // panorama is the base layer, and Go2Town renders its learner HUD, mission
-// beacon, OSM map, Coco, and admin portals as an augmented-reality DOM overlay
+// beacon, Coco, and admin portals as an augmented-reality DOM overlay
 // synchronized to Street View position + POV. No local Street View image
 // fixtures are used by this provider.
 // ---------------------------------------------------------------------------
@@ -392,7 +392,7 @@ export class GoogleWorld extends WorldBase {
         playable: true,
       };
     } catch (err) {
-      console.warn("[world] No live Google pano near map drop:", err);
+      console.warn("[world] No live Google pano near requested position:", err);
       return null;
     }
   }

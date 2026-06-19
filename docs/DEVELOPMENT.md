@@ -12,7 +12,6 @@ This file is a compact handoff for future go2town development. See the README fo
 - Pano graph data is generated into `public/js/data/comaruga.scenes.generated.js`; do not edit it by hand. In live Google mode it is still useful as mission/checkpoint metadata, but not as imagery.
 - Mission definitions are in `public/js/data/comaruga.missions.js`.
 - Future room launch lives behind `public/js/core/subgames.js`.
-- The OpenStreetMap context panel lives in `public/js/core/osmMap.js`; its transparent click layer maps a tap to lat/lng and asks the world provider to jump to the nearest pano. With live Google mode this lookup is async through `StreetViewService`.
 - Hidden admin bookmarking lives in `public/js/core/admin.js`; non-`none` admin bookmarks are pushed into the active world's `setPortals()` so they render as AR-style gates.
 
 ## Route and movement rules
@@ -50,18 +49,16 @@ Current local fixture density:
 
 Movement timing in `public/js/config.js` is tuned for the densified route's ~20 m typical pano spacing. If the fixture is regenerated with much sparser data, revisit `CONFIG.move.refMeters`, `hopBaseMs`, and `fadeMs` together.
 
-## OSM drop-pin teleport
+## Nearest-pano teleport
 
-`osmMap.js` deliberately keeps the iframe as the real OpenStreetMap export and places a transparent button over it. A click/tap is converted from screen coordinates to the current OSM bbox (`renderedBounds`), then calls `world.jumpToNearest(pos, { playableOnly: true })`.
+Providers expose a "snap to the nearest playable pano for a target position" contract. There is no longer an in-game map overlay that calls it, but the capability remains available for mission/checkpoint use:
 
-Provider-side contract:
-
-- `GoogleWorld.jumpToNearest(pos, ...)` may return a Promise because it queries `StreetViewService`; `osmMap.js` awaits it and updates status when the live pano is found.
+- `GoogleWorld.jumpToNearest(pos, ...)` may return a Promise because it queries `StreetViewService`; callers should await it.
 - `Pano360World.nearestScene(pos, { playableOnly })` returns the closest legacy scene, preferring `scene.playable` captures when available.
 - `Pano360World.jumpToScene(sceneId, { faceHeading })` stops active driving and loads that pano without inventing a synthetic route edge.
 - `Pano360World.jumpToNearest(pos, ...)` is synchronous and returns the legacy scene jump payload.
 
-Keep live Google drops on official `StreetViewService` results. Keep legacy drops snapped to playable panos by default. Do not let an OSM click bypass the continuity-vetted legacy playable segment unless a future admin-only workflow explicitly requests non-playable captures.
+Keep live Google `jumpToNearest` results on official `StreetViewService` panos. Keep legacy nearest-pano jumps snapped to playable panos by default. Do not let a nearest-pano jump bypass the continuity-vetted legacy playable segment unless a future admin-only workflow explicitly requests non-playable captures.
 
 ## Mission grounding
 
@@ -70,7 +67,7 @@ Current missions use route checkpoints rather than generated named POIs. This av
 Rules of thumb:
 
 - Use generic spoken mission copy when uncertain: "walk for ice cream", "walk for bread".
-- Use the OSM corner map as context, not as an automatically trusted mission source.
+- Treat generated POI data as context only, not as an automatically trusted mission source.
 - Only introduce a named business in spoken/player-facing content after manual verification.
 - Keep learner UI icon/audio-first. Developer/admin panels may use text.
 
@@ -103,7 +100,6 @@ After changing JS/server behavior:
 ```bash
 node --check public/js/game.js
 node --check public/js/core/admin.js
-node --check public/js/core/osmMap.js
 node --check public/js/core/providers/google.js
 node --check public/js/core/providers/pano360.js
 node --check scripts/smoke.mjs
@@ -139,7 +135,7 @@ node scripts/shot.mjs http://127.0.0.1:8082/ 9222
 - default provider is `google`
 - no source file contains a committed Google API key literal
 - `server.py` exposes `/api/maps-config` and reads the key from env/key-file
-- the Google provider uses `StreetViewPanorama`, `StreetViewService`, runtime config fetch, view-relative movement, OSM drop-pin support, and AR mission/portal overlay classes
+- the Google provider uses `StreetViewPanorama`, `StreetViewService`, runtime config fetch, view-relative movement, nearest-pano snapping, and AR mission/portal overlay classes
 - the Google provider does not depend on local image fixtures
 
 `scripts/smoke_live_google.mjs` drives Chrome against the default provider and checks that the browser loads Google Maps, reaches `world.mode === "google"`, receives finite Street View coordinates, and renders the AR mission target plus admin portal overlay without printing the key.
@@ -148,9 +144,6 @@ node scripts/shot.mjs http://127.0.0.1:8082/ 9222
 
 - start gate hides after trusted click
 - Pannellum world and route hotspots render
-- OSM iframe/link point at `openstreetmap.org`
-- OSM panel expands/collapses/restores
-- OSM click/drop snaps to the nearest playable pano and updates the active scene
 - learner name flow activates a mission HUD
 - route movement is view-relative
 - progress advances after walking

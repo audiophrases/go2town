@@ -2,8 +2,7 @@
 // Phase One missions — a short, continuous walk through Coma-ruga.
 //
 // Mission targets are route checkpoints from the vetted playable Street View
-// chain, not generated shop/POI records. Place labels should come from the
-// OpenStreetMap corner map, where OSM's own map data can be inspected directly.
+// chain, not generated shop/POI records.
 // ---------------------------------------------------------------------------
 
 import { GENERATED } from "./comaruga.scenes.generated.js";

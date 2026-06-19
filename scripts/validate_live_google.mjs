@@ -30,11 +30,11 @@ expect(/StreetViewService/.test(google), 'Google provider should query real Stre
 expect(/go2-ar-layer/.test(google), 'Google provider should create an AR overlay layer');
 expect(/go2-ar-target/.test(google), 'Google provider should render a synced mission target marker');
 expect(/setGoal\(goal\)/.test(google), 'Google provider should implement setGoal for mission overlay sync');
-expect(/jumpToNearest\(pos/.test(google), 'Google provider should support OSM drop-pin snapping in live mode');
+expect(/jumpToNearest\(pos/.test(google), 'Google provider should support nearest-pano snapping in live mode');
 expect(/setPortals\(portals/.test(google), 'Google provider should support admin AR portals in live mode');
 expect(!/innerHTML\s*=\s*`?<span>/.test(google), 'Google AR portals must not render user/admin labels through innerHTML');
 expect(/textContent\s*=\s*portal\.label/.test(google), 'Google AR portal labels should be assigned as textContent');
-expect(/_stopDriving\(\)/.test(google) && /jumpToNearest[\s\S]*this\._stopDriving\(\)/.test(google), 'OSM drop-pin jumps should stop active Google movement first');
+expect(/_stopDriving\(\)/.test(google) && /jumpToNearest[\s\S]*this\._stopDriving\(\)/.test(google), 'nearest-pano jumps should stop active Google movement first');
 expect(/_routeNeighborForView/.test(google), 'Google provider should support view-relative W/S movement through Google links');
 expect(!/cubeFaces|street-view-imagery|\/imagery\/captures/.test(google), 'Google provider must not depend on local scraped/static imagery');
 

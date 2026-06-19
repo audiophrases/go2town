@@ -117,54 +117,7 @@ async function main() {
     stepHotspots: document.querySelectorAll('.go2-hs-step').length,
     legacyArrowHotspots: document.querySelectorAll('.go2-hs-next,.go2-hs-prev,.go2-hs-fwd,.go2-hs-back').length,
     walkButtonRemoved: !document.getElementById('walk-btn'),
-    osmMap: !!document.getElementById('osm-map'),
-    osmFrameSrc: document.getElementById('osm-frame')?.src || '',
-    osmOpenHref: document.getElementById('osm-open')?.href || '',
-    osmDropLayer: !!document.getElementById('osm-drop-layer'),
-    osmDropStatus: document.getElementById('osm-drop-status')?.textContent || '',
-    osmCollapsed: document.getElementById('osm-map')?.classList.contains('collapsed'),
   })`);
-
-  const osmUi = await evalJs(`(()=>{
-    const map=document.getElementById('osm-map');
-    document.getElementById('osm-expand').click();
-    const expanded=map.classList.contains('expanded');
-    document.getElementById('osm-toggle').click();
-    const collapsed=map.classList.contains('collapsed');
-    document.getElementById('osm-toggle').click();
-    const restored=!map.classList.contains('collapsed');
-    return JSON.stringify({expanded, collapsed, restored});
-  })()`);
-
-  const osmDrop = await evalJs(`(async()=>{
-    const { world } = await import('./js/core/world.js');
-    const mapApi = document.getElementById('osm-map').__go2townOsmMap;
-    const layer = document.getElementById('osm-drop-layer');
-    const before = world._currentScene;
-    const next = world._routeNeighbor(before, 1);
-    if (!mapApi || !layer || !next) return JSON.stringify({ok:false, reason:'missing-map-or-next', before, next});
-    const target = world.scenes[next];
-    const pt = mapApi._debugPointFor(target);
-    const rect = layer.getBoundingClientRect();
-    layer.dispatchEvent(new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      clientX: rect.left + pt.x,
-      clientY: rect.top + pt.y,
-    }));
-    await new Promise(r => setTimeout(r, 900));
-    const after = world._currentScene;
-    const status = document.getElementById('osm-drop-status')?.textContent || '';
-    return JSON.stringify({
-      ok: after === next && /jumped to pano/.test(status),
-      before,
-      target: next,
-      after,
-      status,
-      pointInLayer: pt.x >= 0 && pt.x <= rect.width && pt.y >= 0 && pt.y <= rect.height,
-    });
-  })()`);
-  const osmDropObj = JSON.parse(osmDrop);
 
   // 3) wait for the greeting to open the name modal, then submit a name
   await pollUntil(
@@ -284,8 +237,6 @@ async function main() {
   const realErrors = errors.filter((e) => !/favicon\.ico/.test(e));
   console.log("pageErrs  :", pageErrs);
   console.log("afterStart:", afterStart);
-  console.log("osm ui    :", osmUi);
-  console.log("osm drop  :", osmDrop);
   console.log("afterName :", afterName);
   console.log("direction :", directional);
   console.log("nav step  :", nav, "walked:", walked);
@@ -296,7 +247,6 @@ async function main() {
   ws.close();
   const p = JSON.parse(preStart);
   const a = JSON.parse(afterStart);
-  const osm = JSON.parse(osmUi);
   const b = JSON.parse(afterName);
   // Hard pass: the 360 world renders with no errors. HUD is reported too.
   const ok =
@@ -310,15 +260,6 @@ async function main() {
     a.stepHotspots > 0 &&
     a.legacyArrowHotspots === 0 &&
     a.walkButtonRemoved &&
-    a.osmMap &&
-    /openstreetmap\.org\/export\/embed/.test(a.osmFrameSrc) &&
-    /openstreetmap\.org/.test(a.osmOpenHref) &&
-    a.osmCollapsed === false &&
-    osm.expanded &&
-    osm.collapsed &&
-    osm.restored &&
-    osmDropObj.ok &&
-    osmDropObj.pointInLayer &&
     b.hudActive &&
     dirObj.ok &&
     walked &&

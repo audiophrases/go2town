@@ -40,15 +40,6 @@ export const CONFIG = {
     portalVisibleMeters: 32, // show nearby admin-placed AR gates on adjacent panos
   },
 
-  // ---- OpenStreetMap corner map -----------------------------------------
-  // Uses OSM's own embedded map labels instead of project-generated POI pins.
-  osmMap: {
-    collapsed: false,
-    expanded: false,
-    updateMinMeters: 12, // avoid reloading the iframe for tiny yaw-only changes
-    updateMinMs: 1000,
-  },
-
   // ---- Learning / gameplay ----------------------------------------------
   arrivalRadiusMeters: 45, // how close counts as "you made it"
   // Distance thresholds (m) at which Coco gives an encouraging nudge.

@@ -124,7 +124,7 @@ node --check public/js/core/admin.js
 node --check scripts/smoke.mjs
 ```
 
-Run the browser smoke test before declaring a route or admin change done. It checks route rendering, movement, OSM panel behavior, learner flow, and admin bookmark export.
+Run the browser smoke test before declaring a route or admin change done. It checks route rendering, movement, learner flow, and admin bookmark export.
 
 ## 7. Terms and redistribution
 

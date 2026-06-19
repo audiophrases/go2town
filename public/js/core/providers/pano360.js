@@ -432,7 +432,7 @@ export class Pano360World extends WorldBase {
     this._emit();
   }
 
-  /** Find the nearest pano scene to a map drop / mission target. */
+  /** Find the nearest pano scene to a target position. */
   nearestScene(pos, { playableOnly = true } = {}) {
     if (!pos || !this.scenes) return null;
     const entries = Object.entries(this.scenes);
@@ -447,7 +447,7 @@ export class Pano360World extends WorldBase {
     return best;
   }
 
-  /** Jump directly to a scene id. Used by the interactive OSM drop-pin overlay. */
+  /** Jump directly to a scene id. */
   jumpToScene(sceneId, { faceHeading = null } = {}) {
     const sc = this.scenes?.[sceneId];
     if (!sc || !this.viewer) return null;

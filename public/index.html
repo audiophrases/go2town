@@ -51,22 +51,6 @@
       <button id="replay-btn" class="replay-btn" title="listen again">🔊</button>
     </div>
 
-    <!-- OpenStreetMap corner map: OSM's own labels, not generated game POIs. -->
-    <aside id="osm-map" class="osm-map" aria-label="OpenStreetMap">
-      <div class="osm-map-bar">
-        <button id="osm-toggle" class="osm-map-btn" title="hide OpenStreetMap">–</button>
-        <button id="osm-expand" class="osm-map-btn" title="expand map">⛶</button>
-        <a id="osm-open" class="osm-map-btn osm-map-link" href="https://www.openstreetmap.org/" target="_blank" rel="noopener" title="open OpenStreetMap">↗</a>
-      </div>
-      <div class="osm-map-frame-wrap">
-        <iframe id="osm-frame" class="osm-frame" title="OpenStreetMap player position" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <button id="osm-drop-layer" class="osm-drop-layer" type="button" aria-label="drop pin on nearest playable panorama"></button>
-        <div id="osm-player-marker" class="osm-player-marker" aria-hidden="true">▲</div>
-      </div>
-      <div id="osm-drop-status" class="osm-drop-status" aria-live="polite">tap map: jump to pano</div>
-      <div class="osm-credit">© OpenStreetMap</div>
-    </aside>
-
     <!-- Dev caption (only shown when CONFIG.debug is true) -->
     <div id="caption" class="caption"></div>
 

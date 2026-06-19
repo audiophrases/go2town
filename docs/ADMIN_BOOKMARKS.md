@@ -182,4 +182,4 @@ The smoke test should continue to assert:
 - Do not expose `q23r-` to learners; it is a developer shortcut.
 - Do not treat bookmarks as committed data until the JSON has been copied into mission data or a tracked fixture file.
 - Do not rely on `routeIndex` alone after regenerating the pano graph; verify `sceneId` and continuity.
-- Do not make named-business claims from bookmarks unless the place has been checked against a reliable source. Use the OSM panel for context and keep spoken copy generic when unsure.
+- Do not make named-business claims from bookmarks unless the place has been checked against a reliable source. Keep spoken copy generic when unsure.
