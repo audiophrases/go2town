@@ -37,6 +37,14 @@ export const SCRIPT = {
     "Ice cream, bread, shopping — what a day! You are amazing. See you soon!",
 
   replayHint: () => "Listen again.",
+
+  // Vocabulary mini-game lines (core/learn.js). Word-specific copy lives in the
+  // vocab data; these are the functional prompts Coco speaks around a tap.
+  vocab: {
+    ask: (word) => `Where is the ${word}? Tap the ${word}!`,
+    found: (word) => `Yes! The ${word}! Well done!`,
+    redirect: (tapped, word) => `Hmm, that is the ${tapped}. Find the ${word}!`,
+  },
 };
 
 class Coco {

@@ -17,6 +17,7 @@ import { speaker } from "./core/tts.js";
 import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
 import { missions } from "./core/missions.js";
+import { learn } from "./core/learn.js";
 import { isAdminName, mountAdmin, readAdminPortals } from "./core/admin.js";
 import { hasSubgame, launchSubgame } from "./core/subgames.js";
 
@@ -35,6 +36,7 @@ const dom = {
   hudArrow: el("hud-arrow"),
   hudFill: el("hud-fill"),
   replayBtn: el("replay-btn"),
+  learnStars: el("learn-stars"),
   adminPanel: el("admin-panel"),
   adminStatus: el("admin-status"),
   adminList: el("admin-list"),
@@ -92,6 +94,7 @@ dom.startBtn.addEventListener("click", async () => {
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
   if (typeof world.setPortals === "function") world.setPortals(readAdminPortals());
+  learn.start(world, { starsEl: dom.learnStars });
   dom.coco.classList.remove("hidden");
 
   window.addEventListener("go2town:portal", (event) => {

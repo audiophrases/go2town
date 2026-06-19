@@ -39,4 +39,11 @@ export class WorldBase {
     this.position = { lat: town.start.lat, lng: town.start.lng };
     this.heading = town.start.heading ?? 0;
   }
+
+  /**
+   * Render tappable AR vocabulary objects (see core/learn.js). Providers that
+   * support an AR overlay override this; the base no-op keeps the call safe for
+   * providers that don't (e.g. the demo backdrop).
+   */
+  setArObjects() {}
 }

@@ -40,6 +40,14 @@ export const CONFIG = {
     portalVisibleMeters: 32, // show nearby admin-placed AR gates on adjacent panos
   },
 
+  // ---- Vocabulary AR (core/learn.js) ------------------------------------
+  // Tappable AR words floating in the live Street View. Tap one to hear it;
+  // Coco runs a "find it" check after every few new words.
+  learn: {
+    arVisibleMeters: 70, // how close an AR word must be to appear & be tappable
+    checkEveryWords: 3,  // run a comprehension check after this many new words
+  },
+
   // ---- Learning / gameplay ----------------------------------------------
   arrivalRadiusMeters: 45, // how close counts as "you made it"
   // Distance thresholds (m) at which Coco gives an encouraging nudge.

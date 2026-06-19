@@ -110,6 +110,22 @@ class GameHandler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         sys.stderr.write("  %s - %s\n" % (self.address_string(), fmt % args))
 
+    # Local dev server: never let the browser serve stale HTML/JS/CSS from cache.
+    # Without this, editing a file (or deleting a module like a removed overlay)
+    # can leave the browser running an old cached module graph, breaking imports.
+    # Endpoints that set their own Cache-Control (tts, maps-config, imagery) are
+    # left untouched.
+    def send_header(self, keyword, value):
+        if keyword.lower() == "cache-control":
+            self._cache_control_set = True
+        super().send_header(keyword, value)
+
+    def end_headers(self):
+        if not getattr(self, "_cache_control_set", False):
+            super().send_header("Cache-Control", "no-cache")
+        self._cache_control_set = False
+        super().end_headers()
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/api/tts":

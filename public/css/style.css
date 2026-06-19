@@ -391,6 +391,71 @@ html, body {
   border-radius: 50%;
   animation: arPulse 1.6s ease-out infinite;
 }
+.go2-ar-objects { position: absolute; inset: 0; }
+.go2-ar-object {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: left 0.18s ease, top 0.18s ease;
+}
+.go2-ar-object-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.92);
+  border: 3px solid rgba(28, 167, 196, 0.9);
+  font-size: 30px;
+  box-shadow: 0 8px 18px rgba(11, 58, 74, 0.3);
+  animation: arWordBob 2.4s ease-in-out infinite;
+  transition: transform 0.12s ease;
+}
+.go2-ar-object::after {
+  /* shimmer ring inviting a tap */
+  content: "";
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 210, 74, 0.7);
+  animation: arPulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+.go2-ar-object:hover .go2-ar-object-icon { transform: scale(1.08); }
+.go2-ar-object:active .go2-ar-object-icon { transform: scale(0.94); }
+.go2-ar-object.learned .go2-ar-object-icon {
+  border-color: rgba(255, 210, 74, 0.98);
+  box-shadow: 0 0 0 4px rgba(255, 210, 74, 0.28), 0 8px 18px rgba(11, 58, 74, 0.3);
+}
+.go2-ar-object.learned::after { display: none; }
+@keyframes arWordBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.learn-stars {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 40;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.92);
+  color: var(--ink);
+  font: 900 16px/1 var(--font);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  user-select: none;
+}
 .go2-ar-portals { position: absolute; inset: 0; }
 .go2-ar-portal {
   position: absolute;

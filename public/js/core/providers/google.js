@@ -90,6 +90,7 @@ export class GoogleWorld extends WorldBase {
     this.scenes = town.scenes || {};
     this._goal = null;
     this._portals = [];
+    this._arObjects = [];
     this._move = 0;
     this._turn = 0;
     this._driving = false;
@@ -187,7 +188,10 @@ export class GoogleWorld extends WorldBase {
     this._portalLayer = document.createElement("div");
     this._portalLayer.className = "go2-ar-portals";
 
-    this._arLayer.append(this._targetEl, this._portalLayer);
+    this._arObjectsLayer = document.createElement("div");
+    this._arObjectsLayer.className = "go2-ar-objects";
+
+    this._arLayer.append(this._targetEl, this._portalLayer, this._arObjectsLayer);
     document.body.appendChild(this._arLayer);
   }
 
@@ -223,6 +227,7 @@ export class GoogleWorld extends WorldBase {
     }
 
     this._renderPortalOverlays();
+    this._renderArObjects();
   }
 
   _renderPortalOverlays() {
@@ -253,6 +258,32 @@ export class GoogleWorld extends WorldBase {
     }
   }
 
+  _renderArObjects() {
+    if (!this._arObjectsLayer || !this.position) return;
+    this._arObjectsLayer.innerHTML = "";
+    const maxDistance = CONFIG.learn?.arVisibleMeters ?? 70;
+    for (const obj of this._arObjects || []) {
+      const projected = this._projectBearingToScreen(obj, { maxAngle: 78, y: 56 });
+      if (!projected || projected.edge || projected.distance > maxDistance) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "go2-ar-object" + (obj.learned ? " learned" : "");
+      button.style.left = `${projected.x}%`;
+      button.style.top = `${projected.y}%`;
+      button.setAttribute("aria-label", obj.word || "word");
+      const icon = document.createElement("span");
+      icon.className = "go2-ar-object-icon";
+      icon.textContent = obj.icon || "✨";
+      button.append(icon);
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.dispatchEvent(new CustomEvent("go2town:ar", { detail: obj }));
+      });
+      this._arObjectsLayer.appendChild(button);
+    }
+  }
+
   setGoal(goal) {
     this._goal = goal || null;
     this._refreshArOverlay();
@@ -261,6 +292,13 @@ export class GoogleWorld extends WorldBase {
 
   setPortals(portals = []) {
     this._portals = Array.isArray(portals) ? portals.filter((p) => p && p.subgame !== "none") : [];
+    this._refreshArOverlay();
+  }
+
+  setArObjects(objects = []) {
+    this._arObjects = Array.isArray(objects)
+      ? objects.filter((o) => o && Number.isFinite(o.lat) && Number.isFinite(o.lng))
+      : [];
     this._refreshArOverlay();
   }
 
