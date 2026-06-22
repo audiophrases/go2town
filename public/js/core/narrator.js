@@ -17,12 +17,12 @@ import { CONFIG } from "../config.js";
 
 export const SCRIPT = {
   greeting: () =>
-    "Hello! Hello! I am Coco. I am a little seagull. " +
-    "Welcome to my town! What is your name?",
+    "Hey — welcome to Coma-ruga. I'm Coco, I'll show you the ropes around here. " +
+    "First things first: what should I call you?",
 
   welcome: (name) =>
-    `${name}! Nice to meet you, ${name}! ` +
-    "Welcome to Coma-ruga, by the sea. Are you ready for an adventure?",
+    `${name}. Good to meet you, ${name}. ` +
+    "Big day — new town, and you're on your own. Don't worry, I've got you. Let's get moving.",
 
   // Spoken when the learner gets meaningfully closer to the target.
   nudgeCloser: () => "Yes! You are getting closer! Keep going!",
@@ -33,8 +33,8 @@ export const SCRIPT = {
 
   // After every mission is done.
   allDone: (name) =>
-    `Wow, ${name}! You did it! You walked all around my town. ` +
-    "Ice cream, bread, shopping — what a day! You are amazing. See you soon!",
+    `Nice work, ${name}. You found your way across town and made it to the sea — and to Mar. ` +
+    "Not bad for day one. See you out there.",
 
   replayHint: () => "Listen again.",
 

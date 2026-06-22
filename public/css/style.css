@@ -456,6 +456,40 @@ html, body {
   pointer-events: none;
   user-select: none;
 }
+/* Audio-only dialogue: tap an intent icon to "say" the matching line. */
+.story-choices {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 42;
+  display: flex;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(11, 58, 74, 0.78);
+  box-shadow: var(--shadow);
+  animation: choicesIn 0.22s ease-out;
+}
+.story-choice {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border: 3px solid rgba(255, 253, 247, 0.95);
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.96);
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(4, 24, 34, 0.4);
+  transition: transform 0.12s ease;
+}
+.story-choice:hover { transform: scale(1.08); }
+.story-choice:active { transform: scale(0.94); }
+@keyframes choicesIn {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 .go2-ar-portals { position: absolute; inset: 0; }
 .go2-ar-portal {
   position: absolute;
