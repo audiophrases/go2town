@@ -1,0 +1,122 @@
+{
+  "C:\\Users\\Admin\\go2town\\public\\js\\config.js": {
+    "mtime": 1781866075.5613146,
+    "ast_hash": "bbb07b27a8ddad700d8f794c56a99cc9",
+    "semantic_hash": "bbb07b27a8ddad700d8f794c56a99cc9"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\admin.js": {
+    "mtime": 1781598528.2483323,
+    "ast_hash": "7eda2519ca52fb5a9e14555e07dd4bf6",
+    "semantic_hash": "7eda2519ca52fb5a9e14555e07dd4bf6"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\geo.js": {
+    "mtime": 1781511869.615052,
+    "ast_hash": "32d3a7178c7115368f4b83cc5d0a6604",
+    "semantic_hash": "32d3a7178c7115368f4b83cc5d0a6604"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\learn.js": {
+    "mtime": 1781866037.1056662,
+    "ast_hash": "2326287eedafbe9b4782bea29c41c1f2",
+    "semantic_hash": "2326287eedafbe9b4782bea29c41c1f2"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\missions.js": {
+    "mtime": 1781512364.1343243,
+    "ast_hash": "8332499567d6ebbcc000c02efce26488",
+    "semantic_hash": "8332499567d6ebbcc000c02efce26488"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\narrator.js": {
+    "mtime": 1781870381.9688041,
+    "ast_hash": "0b61277a4781da8663badf00b9ff4f2b",
+    "semantic_hash": "0b61277a4781da8663badf00b9ff4f2b"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\providers\\demo.js": {
+    "mtime": 1781511983.9664752,
+    "ast_hash": "e67dd9ea890c808450bba51fa57e8de2",
+    "semantic_hash": "e67dd9ea890c808450bba51fa57e8de2"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\providers\\google.js": {
+    "mtime": 1781866058.0297127,
+    "ast_hash": "a4e4f587e60be18b22f9565af8ec54fc",
+    "semantic_hash": "a4e4f587e60be18b22f9565af8ec54fc"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\providers\\pano360.js": {
+    "mtime": 1781856601.2128587,
+    "ast_hash": "ab230be78e20b6db0bee7f830049bf0d",
+    "semantic_hash": "ab230be78e20b6db0bee7f830049bf0d"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\story.js": {
+    "mtime": 1781870350.9168656,
+    "ast_hash": "a0da32caf5cc81cf14868e82211d8dd8",
+    "semantic_hash": "a0da32caf5cc81cf14868e82211d8dd8"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\subgames.js": {
+    "mtime": 1781509677.7742023,
+    "ast_hash": "98dacf71a4d5f53382badf6fb4e82c12",
+    "semantic_hash": "98dacf71a4d5f53382badf6fb4e82c12"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\tts.js": {
+    "mtime": 1781512849.4630654,
+    "ast_hash": "3d5efa72236b78d318183ba41af05c0c",
+    "semantic_hash": "3d5efa72236b78d318183ba41af05c0c"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\world.js": {
+    "mtime": 1781512117.7655258,
+    "ast_hash": "0642e5a15ea8ea5274d88756b753882b",
+    "semantic_hash": "0642e5a15ea8ea5274d88756b753882b"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\core\\worldBase.js": {
+    "mtime": 1781866065.8364472,
+    "ast_hash": "7a082993c4643d99d886ba55b227af36",
+    "semantic_hash": "7a082993c4643d99d886ba55b227af36"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.js": {
+    "mtime": 1781592590.333475,
+    "ast_hash": "eee6ff027fc501fe1187f369da37fde8",
+    "semantic_hash": "eee6ff027fc501fe1187f369da37fde8"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.missions.js": {
+    "mtime": 1781856458.356877,
+    "ast_hash": "125ec14dfc950a17ba9c38179905490a",
+    "semantic_hash": "125ec14dfc950a17ba9c38179905490a"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.pois.generated.js": {
+    "mtime": 1781596413.8320909,
+    "ast_hash": "79dff9c4eaa76ed7dc5b94cfb65161aa",
+    "semantic_hash": "79dff9c4eaa76ed7dc5b94cfb65161aa"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.scenes.generated.js": {
+    "mtime": 1781596243.8144464,
+    "ast_hash": "14a71c55208d585f4b5a99a221856cea",
+    "semantic_hash": "14a71c55208d585f4b5a99a221856cea"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.story.js": {
+    "mtime": 1781870326.579618,
+    "ast_hash": "857348137fa8c2485d45ef46ebb0c799",
+    "semantic_hash": "857348137fa8c2485d45ef46ebb0c799"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\data\\comaruga.vocab.js": {
+    "mtime": 1781866018.8825047,
+    "ast_hash": "640e9e1f0ab329cfc67c744fbd386ddb",
+    "semantic_hash": "640e9e1f0ab329cfc67c744fbd386ddb"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\js\\game.js": {
+    "mtime": 1781870365.609572,
+    "ast_hash": "01987ea2d6f7a176faef54cf6806629f",
+    "semantic_hash": "01987ea2d6f7a176faef54cf6806629f"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\vendor\\pannellum\\pannellum.js": {
+    "mtime": 1781511849.5714457,
+    "ast_hash": "139c7541b641d16b5fe87f95e9c49153",
+    "semantic_hash": "139c7541b641d16b5fe87f95e9c49153"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\img\\scenes\\README.md": {
+    "mtime": 1781541959.1395228,
+    "ast_hash": "eafd404f20f031172248e45594681039",
+    "semantic_hash": "eafd404f20f031172248e45594681039"
+  },
+  "C:\\Users\\Admin\\go2town\\public\\index.html": {
+    "mtime": 1781866077.550446,
+    "ast_hash": "c90411822db2186e3d28926bae39f0a1",
+    "semantic_hash": "c90411822db2186e3d28926bae39f0a1"
+  }
+}
