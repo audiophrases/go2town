@@ -1,10 +1,18 @@
 // ---------------------------------------------------------------------------
-// admin.js — hidden route-bookmarking mode.
+// admin.js — hidden spot-pinning mode.
 //
-// Enter name "q23r-" to open this panel instead of the learner mission flow.
-// Bookmarks are stored in localStorage and exported as JSON for implementation
-// into future mission destinations and 2D mini subgame rooms.
+// Enter name "q23r-" to open this panel instead of the learner game. The town
+// minimap becomes clickable: click anywhere to drop a pin, choose its type
+// (home, school, pizza, …), and save it. Pins are stored in localStorage and
+// exported as JSON — they show up as live missions for the player immediately,
+// and the JSON gets baked into data/comaruga.spots.js.
+//
+// A "portal" type is also offered for the older 2D-room idea (rendered as an AR
+// gate in the world). Everything else is a map "spot" mission.
 // ---------------------------------------------------------------------------
+
+import { minimap } from "./minimap.js";
+import { getMissionType } from "./missionTypes.js";
 
 const STORE_KEY = "go2town.admin.bookmarks.v1";
 const ADMIN_NAME = "q23r-";
@@ -36,6 +44,20 @@ export function readAdminBookmarks() {
 
 export function readAdminPortals() {
   return readBookmarks().filter(isPortalBookmark);
+}
+
+/** Admin-pinned map spots, in the shape the free-roam mission board expects. */
+export function readAdminSpots() {
+  return readBookmarks()
+    .filter((b) => b && b.kind === "spot" && Number.isFinite(b.lat) && Number.isFinite(b.lng))
+    .map((b) => ({
+      id: b.id,
+      type: b.type || "generic",
+      label: b.label || b.id,
+      icon: b.icon,
+      lat: b.lat,
+      lng: b.lng,
+    }));
 }
 
 function writeBookmarks(bookmarks) {
@@ -100,6 +122,35 @@ function currentSnapshot(world) {
   };
 }
 
+// A snapshot for a pin dropped on the minimap (lat/lng known, no Street View
+// pano under it). Mirrors currentSnapshot's shape so render/export stay uniform.
+function pinSnapshot(lat, lng) {
+  const rlat = rounded(lat, 7);
+  const rlng = rounded(lng, 7);
+  return {
+    lat: rlat,
+    lng: rlng,
+    heading: null,
+    sceneId: null,
+    routeIndex: null,
+    routeSegment: null,
+    segmentRouteIndex: null,
+    playable: null,
+    view: {},
+    osmUrl:
+      rlat != null && rlng != null
+        ? `https://www.openstreetmap.org/?mlat=${rlat.toFixed(6)}&mlon=${rlng.toFixed(6)}#map=19/${rlat.toFixed(6)}/${rlng.toFixed(6)}`
+        : "",
+  };
+}
+
+// The spots array, ready to paste into data/comaruga.spots.js.
+function spotsExport(bookmarks) {
+  return bookmarks
+    .filter((b) => b.kind === "spot")
+    .map((b) => ({ id: b.id, type: b.type || "generic", label: b.label, icon: b.icon, lat: b.lat, lng: b.lng }));
+}
+
 function missionCode(bookmarks) {
   return bookmarks
     .map((b) => {
@@ -127,6 +178,7 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
 
   let worldRef = null;
   let bookmarks = readBookmarks();
+  let pendingPin = null; // {lat,lng} dropped on the minimap, waiting to be saved
 
   function setStatus(text) {
     if (status) status.textContent = text;
@@ -152,13 +204,15 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
       bookmarks.forEach((b, index) => {
         const row = document.createElement("div");
         row.className = "admin-bookmark-row";
+        const kindLabel =
+          b.kind === "spot" ? `spot: ${b.type || "generic"}` : `AR portal: ${b.subgame || "future-room"}`;
         row.innerHTML = `
           <div class="admin-bookmark-main">
             <strong>${b.icon || "📍"} ${b.label || b.id}</strong>
-            <span>${b.sceneId || "no-scene"} · ${b.lat}, ${b.lng}</span>
-            <em>${b.subgame === "none" ? "mission only" : `AR portal: ${b.subgame || "future-room"}`}</em>
+            <span>${b.lat}, ${b.lng}</span>
+            <em>${kindLabel}</em>
           </div>
-          <button class="admin-mini-btn" data-remove="${index}" title="remove bookmark">×</button>
+          <button class="admin-mini-btn" data-remove="${index}" title="remove pin">×</button>
         `;
         list.appendChild(row);
       });
@@ -173,8 +227,9 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
 
     const payload = {
       generatedAt: new Date().toISOString(),
-      purpose: "go2town admin bookmarks for future mission destinations and 2D mini subgame rooms",
+      purpose: "go2town admin pins — map spot missions (+ optional 2D-room portals)",
       bookmarks,
+      spots: spotsExport(bookmarks),
       missionDraft: missionCode(bookmarks),
     };
     if (exportBox) exportBox.value = JSON.stringify(payload, null, 2);
@@ -184,19 +239,29 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
   }
 
   function addBookmark() {
-    const snap = currentSnapshot(worldRef);
+    // Position comes from the minimap pin if one's been dropped; otherwise fall
+    // back to wherever the admin is standing in Street View.
+    const snap = pendingPin ? pinSnapshot(pendingPin.lat, pendingPin.lng) : currentSnapshot(worldRef);
     if (snap.lat == null || snap.lng == null) {
-      setStatus("world position is not ready yet");
+      setStatus("click the map to drop a pin first");
       return;
     }
-    const label = labelInput?.value?.trim() || `spot ${bookmarks.length + 1}`;
+
+    const choice = subgameSelect?.value || "home";
+    const isPortal = choice === "portal-room";
+    const type = isPortal ? null : choice;
+    const typeMeta = type ? getMissionType(type) : null;
+
+    const label = labelInput?.value?.trim() || (type || `spot ${bookmarks.length + 1}`);
     const id = `${safeId(label)}-${String(bookmarks.length + 1).padStart(2, "0")}`;
+    const icon = iconInput?.value?.trim() || (isPortal ? "🚪" : typeMeta.icon);
     const bookmark = {
       id,
       label,
-      icon: iconInput?.value?.trim() || "📍",
-      subgame: subgameSelect?.value || "future-room",
-      kind: (subgameSelect?.value || "future-room") === "none" ? "bookmark" : "portal",
+      icon,
+      type, // mission type for spots; null for portals
+      subgame: isPortal ? "future-room" : "none",
+      kind: isPortal ? "portal" : "spot",
       notes: notesInput?.value?.trim() || "",
       createdAt: new Date().toISOString(),
       ...snap,
@@ -204,12 +269,22 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
     bookmarks.push(bookmark);
     if (labelInput) labelInput.value = "";
     if (notesInput) notesInput.value = "";
+    pendingPin = null;
+    minimap.clearPending();
     render();
-    setStatus(`${isPortalBookmark(bookmark) ? "portal placed" : "bookmarked"}: ${bookmark.label}`);
+    setStatus(`${isPortal ? "portal placed" : `pinned ${type}`}: ${bookmark.label}`);
   }
 
   addBtn?.addEventListener("click", addBookmark);
   copyBtn?.addEventListener("click", copyExport);
+
+  // The minimap tells us where the admin clicked; remember it for the next save.
+  window.addEventListener("go2town:minimap-pin", (e) => {
+    const d = e.detail || {};
+    if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) return;
+    pendingPin = { lat: d.lat, lng: d.lng };
+    setStatus(`pin ready: ${d.lat.toFixed(5)}, ${d.lng.toFixed(5)} — pick a type and save`);
+  });
   downloadBtn?.addEventListener("click", () => {
     downloadJson("go2town-admin-bookmarks.json", JSON.parse(exportBox.value || "{}"));
     setStatus("downloaded bookmarks JSON");
@@ -229,9 +304,14 @@ export function mountAdmin({ panel, status, list, exportBox, labelInput, iconInp
       panel.classList.remove("hidden");
       document.body.classList.add("admin-mode");
       render();
-      setStatus("admin mode: walk to a spot, label it, then bookmark it");
+      setStatus("admin mode: click the map to drop a pin, pick a type, save");
       window.go2townAdmin = {
         addBookmark,
+        // Drop a pin programmatically (tools/tests) without clicking the map.
+        pinAt: (lat, lng) => {
+          pendingPin = { lat, lng };
+          setStatus(`pin ready: ${lat}, ${lng}`);
+        },
         getBookmarks: () => [...bookmarks],
         export: () => JSON.parse(exportBox?.value || "{}"),
         clear: () => {

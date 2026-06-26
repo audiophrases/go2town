@@ -208,6 +208,22 @@ html, body {
 .replay-btn:hover { transform: scale(1.08); }
 .replay-btn:active { transform: scale(0.94); }
 
+/* Standalone, always-on-screen replay button (top center). */
+.floating-replay {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 46;
+  width: 52px;
+  height: 52px;
+  font-size: 26px;
+}
+.floating-replay:hover { transform: translateX(-50%) scale(1.08); }
+.floating-replay:active { transform: translateX(-50%) scale(0.94); }
+/* No replaying while pinning spots. */
+body.admin-mode .floating-replay { display: none; }
+
 /* ---- 360° route hotspots (Pannellum) ------------------------------------ */
 /* Two-class selectors out-specificity Pannellum's default sprite hotspot. */
 .pnlm-hotspot-base.go2-hs {
@@ -445,7 +461,7 @@ html, body {
 .learn-stars {
   position: fixed;
   left: 14px;
-  bottom: 14px;
+  top: 14px;
   z-index: 40;
   padding: 6px 12px;
   border-radius: 999px;
@@ -455,6 +471,31 @@ html, body {
   box-shadow: var(--shadow);
   pointer-events: none;
   user-select: none;
+}
+
+/* ---- Minimap (GTA-style corner map) ------------------------------------- */
+/* Hidden until it binds to a live Google world (then JS adds .ready). */
+#minimap {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 200px;
+  height: 200px;
+  z-index: 45;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f3efe3;
+  box-shadow: var(--shadow), 0 0 0 3px rgba(255, 253, 247, 0.9);
+  display: none;
+}
+#minimap.ready { display: block; }
+/* In admin mode the map grows so pins are easy to place precisely. */
+#minimap.admin {
+  width: min(62vw, 440px);
+  height: min(62vh, 440px);
+}
+@media (max-width: 560px) {
+  #minimap { width: 134px; height: 134px; right: 10px; bottom: 10px; }
 }
 /* Audio-only dialogue: tap an intent icon to "say" the matching line. */
 .story-choices {
@@ -696,6 +737,7 @@ html, body {
   font-size: 11px;
 }
 body.admin-mode .hud { display: none; }
+body.admin-mode .learn-stars { display: none; }
 body.admin-mode .coco-avatar.floating { opacity: 0.35; }
 
 /* ---- Subgame overlay (future phases) ------------------------------------ */

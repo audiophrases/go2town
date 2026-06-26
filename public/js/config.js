@@ -48,6 +48,12 @@ export const CONFIG = {
     checkEveryWords: 3,  // run a comprehension check after this many new words
   },
 
+  // ---- Minimap (GTA-style corner map, only with worldProvider "google") --
+  minimap: {
+    zoom: 18,           // closer = more "you are here", further = more context
+    followPlayer: true, // recenter on every step (false = a fixed town view)
+  },
+
   // ---- Learning / gameplay ----------------------------------------------
   arrivalRadiusMeters: 45, // how close counts as "you made it"
   // Distance thresholds (m) at which Coco gives an encouraging nudge.

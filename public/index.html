@@ -10,6 +10,10 @@
     <!-- The world: a Google Street View panorama (or a demo backdrop). -->
     <div id="world"></div>
 
+    <!-- GTA-style minimap: a live Google map locked to the Street View, with
+         mission pins. Hidden until it binds (Google worlds only). -->
+    <div id="minimap" aria-hidden="true"></div>
+
     <!-- Start gate: needed to unlock audio (browser autoplay policy). -->
     <div id="start-gate" class="overlay">
       <div class="start-card">
@@ -43,16 +47,20 @@
     <!-- Persistent narrator avatar (Coco) -->
     <div id="coco" class="coco-avatar floating hidden" title="Coco">🐦</div>
 
-    <!-- Mission HUD: icons only, no written English. -->
+    <!-- Mission HUD: icons only, no written English. (Legacy linear-tour HUD;
+         the free-roam map model leaves it hidden, but kept for reuse.) -->
     <div id="hud" class="hud">
       <div class="hud-target"><span id="hud-icon">🚉</span></div>
       <div class="hud-arrow-wrap"><span id="hud-arrow" class="hud-arrow">⬆️</span></div>
       <div class="hud-progress"><div id="hud-fill" class="hud-fill"></div></div>
-      <button id="replay-btn" class="replay-btn" title="listen again">🔊</button>
     </div>
 
-    <!-- Vocabulary stars: one per AR word learned/found (icon-only progress). -->
-    <div id="learn-stars" class="learn-stars" aria-label="words learned">⭐ 0</div>
+    <!-- Replay: always available. Hear the last thing Coco said again — the
+         learner never reads English, so this is their way back to any message. -->
+    <button id="replay-btn" class="replay-btn floating-replay" title="listen again">🔊</button>
+
+    <!-- Points badge: total score across missions (icon-only progress). -->
+    <div id="learn-stars" class="learn-stars" aria-label="points">⭐ 0</div>
 
     <!-- Dev caption (only shown when CONFIG.debug is true) -->
     <div id="caption" class="caption"></div>
@@ -65,20 +73,26 @@
     <!-- Hidden admin bookmarking session. Type q23r- as the player name. -->
     <section id="admin-panel" class="admin-panel hidden" aria-label="admin bookmarks">
       <div class="admin-head">
-        <strong>Admin bookmarks</strong>
-        <span id="admin-status">walk to a spot</span>
+        <strong>Admin · pin spots</strong>
+        <span id="admin-status">click the map to pin</span>
       </div>
       <div class="admin-form">
-        <input id="admin-label" type="text" maxlength="48" placeholder="spot label" aria-label="spot label" />
-        <input id="admin-icon" type="text" maxlength="4" value="📍" aria-label="icon" />
-        <select id="admin-subgame" aria-label="future room type">
-          <option value="future-room">portal / future 2D room</option>
-          <option value="iceCream">ice cream room</option>
-          <option value="bakery">bakery room</option>
-          <option value="none">mission only</option>
+        <input id="admin-label" type="text" maxlength="48" placeholder="spot label (dev only)" aria-label="spot label" />
+        <input id="admin-icon" type="text" maxlength="4" value="" placeholder="icon (auto)" aria-label="icon" />
+        <select id="admin-subgame" aria-label="spot type">
+          <option value="home">🏠 home</option>
+          <option value="school">🏫 school</option>
+          <option value="store">🏪 store</option>
+          <option value="pizza">🍕 pizza place</option>
+          <option value="icecream">🍦 ice cream</option>
+          <option value="bakery">🥖 bakery</option>
+          <option value="beach">🏖️ beach</option>
+          <option value="park">🌳 park</option>
+          <option value="friend">🧑 friend / person</option>
+          <option value="portal-room">🚪 portal (future 2D room)</option>
         </select>
-        <textarea id="admin-notes" rows="2" maxlength="240" placeholder="notes for implementation"></textarea>
-        <button id="admin-add" type="button">＋ add portal / bookmark here</button>
+        <textarea id="admin-notes" rows="2" maxlength="240" placeholder="notes (optional)"></textarea>
+        <button id="admin-add" type="button">＋ save pin here</button>
       </div>
       <div id="admin-list" class="admin-list"></div>
       <div class="admin-actions">

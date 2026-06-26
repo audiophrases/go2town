@@ -24,6 +24,12 @@ export const SCRIPT = {
     `${name}. Good to meet you, ${name}. ` +
     "Big day — new town, and you're on your own. Don't worry, I've got you. Let's get moving.",
 
+  // Spoken once the map appears — sets up the free-roam ("go anywhere") loop.
+  roamIntro: (name) =>
+    `Look — here's our town map, down in the corner. ` +
+    `See the little pins? Each one is a place to find: a shop, some food, your home. ` +
+    `Walk to any pin you like, ${name}. Use your arrows to move. Off you go!`,
+
   // Spoken when the learner gets meaningfully closer to the target.
   nudgeCloser: () => "Yes! You are getting closer! Keep going!",
   nudgeClose: () => "Almost there! It is very close now!",

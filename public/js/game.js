@@ -1,25 +1,28 @@
 // ---------------------------------------------------------------------------
-// game.js — Phase One bootstrap and story flow for Coma-ruga.
+// game.js — bootstrap + free-roam ("GTA") flow for Coma-ruga.
 //
 // Flow:
-//   ▶ start  → unlock audio
+//   ▶ start  → unlock audio, load live Street View + the corner minimap
 //   Coco greets and asks the learner's name
 //   learner types their name (the only text they ever type)
-//   Coco welcomes them, then a tour of vetted route checkpoints with icon-only
-//   HUD targets, spoken nudges, and arrival celebrations
-//   (+ subgame hook).
+//   Coco welcomes them, then free-roam begins: the minimap shows every pinned
+//   spot as an open mission. Walk up to any pin → Coco reacts (audio only),
+//   points are awarded, the pin turns green. No written English, ever; the 🔊
+//   button replays Coco's last line.
+//
+// Admin (name "q23r-"): the minimap becomes clickable to pin new spots.
 // ---------------------------------------------------------------------------
 
 import { CONFIG } from "./config.js";
 import { TOWN } from "./data/comaruga.js";
-import { MISSIONS } from "./data/comaruga.missions.js";
+import { DEFAULT_SPOTS } from "./data/comaruga.spots.js";
 import { speaker } from "./core/tts.js";
 import { coco, SCRIPT } from "./core/narrator.js";
 import { world } from "./core/world.js";
-import { missions } from "./core/missions.js";
-import { story } from "./core/story.js";
-import { isAdminName, mountAdmin, readAdminPortals } from "./core/admin.js";
-import { hasSubgame, launchSubgame } from "./core/subgames.js";
+import { minimap } from "./core/minimap.js";
+import { score } from "./core/score.js";
+import { missionBoard } from "./core/missionBoard.js";
+import { isAdminName, mountAdmin, readAdminPortals, readAdminSpots } from "./core/admin.js";
 
 // ---- DOM ------------------------------------------------------------------
 const el = (id) => document.getElementById(id);
@@ -37,6 +40,7 @@ const dom = {
   hudFill: el("hud-fill"),
   replayBtn: el("replay-btn"),
   learnStars: el("learn-stars"),
+  minimap: el("minimap"),
   adminPanel: el("admin-panel"),
   adminStatus: el("admin-status"),
   adminList: el("admin-list"),
@@ -58,12 +62,8 @@ let learnerName = localStorage.getItem("go2town.name") || "";
 
 // ---- Wire up the persistent UI -------------------------------------------
 coco.mount({ avatarEl: dom.coco, captionEl: dom.caption });
-missions.mountHud({
-  hudEl: dom.hud,
-  iconEl: dom.hudIcon,
-  arrowEl: dom.hudArrow,
-  fillEl: dom.hudFill,
-});
+minimap.mount({ container: dom.minimap });
+score.mount(dom.learnStars);
 const admin = mountAdmin({
   panel: dom.adminPanel,
   status: dom.adminStatus,
@@ -81,7 +81,13 @@ const admin = mountAdmin({
 
 if (CONFIG.debug) {
   dom.devPanel.classList.remove("hidden");
-  dom.devArrive.addEventListener("click", () => missions.forceArrive());
+  // Fast-travel to the nearest open pin so its mission can be tested instantly.
+  dom.devArrive.addEventListener("click", async () => {
+    const spot = missionBoard.nearestOpen();
+    if (spot && typeof world.jumpToNearest === "function") {
+      await world.jumpToNearest({ lat: spot.lat, lng: spot.lng });
+    }
+  });
 }
 
 // 🔊 replay the current instruction; tapping Coco does the same.
@@ -94,7 +100,9 @@ dom.startBtn.addEventListener("click", async () => {
   dom.startGate.classList.add("hidden");
   await world.init({ container: dom.world, town: TOWN });
   if (typeof world.setPortals === "function") world.setPortals(readAdminPortals());
-  story.start(world, { starsEl: dom.learnStars });
+  // Ride the live Street View map with a GTA-style minimap (Google worlds only;
+  // the demo / pano360 fallbacks have no map to bind to, so it stays hidden).
+  minimap.bind(world);
   dom.coco.classList.remove("hidden");
 
   window.addEventListener("go2town:portal", (event) => {
@@ -124,6 +132,7 @@ dom.nameForm.addEventListener("submit", async (e) => {
   if (isAdminName(name)) {
     dom.nameModal.classList.add("hidden");
     localStorage.removeItem("go2town.name");
+    minimap.setAdminMode(true); // click the map to drop pins
     admin.start(world);
     return;
   }
@@ -132,43 +141,26 @@ dom.nameForm.addEventListener("submit", async (e) => {
   dom.nameModal.classList.add("hidden");
 
   await coco.say(SCRIPT.welcome(name));
-  await story.runArrival();
-  runMissions(name);
+  startFreeRoam(name);
 });
 
-// Turn the configured distance thresholds into spoken nudges. remember:false so
-// the 🔊 button always replays the mission instruction, not the latest nudge.
-function buildNudges() {
-  const sorted = [...CONFIG.proximityNudges].sort((a, b) => a - b);
-  return sorted.map((meters, i) => ({
-    atMeters: meters,
-    say: () =>
-      coco.say(i === 0 ? SCRIPT.nudgeClose() : SCRIPT.nudgeCloser(), { remember: false }),
-  }));
+// ---- Free-roam: every pin on the minimap is an open mission ----------------
+function startFreeRoam(name) {
+  // Default town pins, with any admin-placed pins merged on top (same id wins).
+  const spots = mergeSpots(DEFAULT_SPOTS, readAdminSpots());
+  missionBoard.start({
+    world,
+    minimap,
+    score,
+    spots,
+    getName: () => learnerName || name,
+  });
+  coco.say(SCRIPT.roamIntro(name));
 }
 
-// ---- The tour: walk to each route checkpoint in turn ------------------------
-async function runMissions(name) {
-  for (const m of MISSIONS) {
-    // Give the world the mission target for HUD / arrival state, then announce it.
-    // Route movement itself stays on the deterministic capture chain.
-    if (typeof world.setGoal === "function") world.setGoal({ ...m.target, icon: m.icon, subgame: m.subgame });
-    await coco.say(m.mission(name));
-
-    await missions.run({
-      icon: m.icon,
-      target: m.target,
-      radius: CONFIG.arrivalRadiusMeters,
-      nudges: buildNudges(),
-      onArrive: async () => {
-        await coco.say(m.arrival(name));
-        // Future: a 2D "room" for this stop. Stub returns immediately for now.
-        if (m.subgame && hasSubgame(m.subgame)) {
-          await launchSubgame(m.subgame, { name, mission: m });
-        }
-      },
-    });
-    console.info(`[game] ${name} reached "${m.id}".`);
-  }
-  await coco.say(SCRIPT.allDone(name));
+// Admin-placed spots override defaults sharing the same id; the rest append.
+function mergeSpots(defaults, extra) {
+  const byId = new Map(defaults.map((s) => [s.id, s]));
+  for (const s of extra || []) byId.set(s.id, s);
+  return [...byId.values()];
 }
